@@ -1,4 +1,5 @@
 
+name: lf-dbt
 services:
     lf-dbt:
         container_name: lf-dbt

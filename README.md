@@ -9,7 +9,24 @@ UV makes this possible because it allows us to manage Python packages via a cent
 
 The container provides a full-fledged Python and DBT environment.
 
-Usually you will need to mount data and project folders into the container:
+To build the container and run commands:
+
+```bash
+# build the container, only needed once.
+docker compose build
+
+# to run dbt commands, e.g. check version
+docker run -it --rm lf-dbt dbt --version
+```
+
+Usually you will need to mount data and project folders into the container.
+Either add the --volume command
+
+```bash
+docker run -it --rm --volume /coasti:/coasti lf-dbt dbt --version
+```
+
+or, if more involved, use a docker-compose.yml
 
 ```yaml
 # docker-compose.yml
@@ -21,22 +38,18 @@ services:
             - /coasti/products/haushaltplus/:/coasti/products/haushaltplus/
 ```
 
-To build the container and run commands:
-
+then run with
 ```bash
-# build the container, only needed once.
-docker compose build
-
-# to run dbt commands, e.g. check version
-docker run -it --rm lf-dbt dbt --version
+docker compose -f /path/to/docker-compose.yml run -it --rm lf-dbt dbt --version
 ```
 
-Often you will need some setup, like loading environment variables.
-Then, it can be helpful to define an init command that can be reused easily:
+Often you will need some setup, like loading environment variables inside the container.
+Then, it can be helpful to define an init command that can be reused:
 
 ```bash
-INIT_CMD="cd /coasti/products/haushaltplus; set -a; source ./config/.env; set +a;"
-docker run -it --rm lf-dbt bash -c "$INIT_CMD dbt version"
+INIT_CMD="set -a; source ./config/.env; set +a;"
+docker run -it --rm --workdir /coasti/products/haushaltplus \
+    lf-dbt bash -c "$INIT_CMD dbt version"
 ```
 
 ## Updating Dependencies in this Repo
