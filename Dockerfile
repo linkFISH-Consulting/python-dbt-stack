@@ -35,6 +35,10 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
 # ------------------------------- Dependencies ------------------------------- #
 
+# Git is needed for `dbt deps`
+RUN apt-get update && apt-get install -y git \
+    && rm -rf /var/lib/apt/lists/*
+
 # Either get our python project from the host, or from git
 COPY . /app
 # RUN apt-get update && apt-get install -y git

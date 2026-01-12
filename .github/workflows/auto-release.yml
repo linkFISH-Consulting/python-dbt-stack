@@ -1,0 +1,120 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  check-version-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history to compare versions
+
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(grep "^version = " pyproject.toml | sed "s/version = \"\([^\"']*\)\"/\1/" | tr -d ' ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Get previous version
+        id: previous_version
+        run: |
+          # Get the version from the last release tag, or from previous commit if no tags exist
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -n "$LAST_TAG" ]; then
+            # Extract version from last tag (remove 'v' prefix if present)
+            PREV_VERSION=$(echo "$LAST_TAG" | sed 's/^v//')
+            echo "previous_version=$PREV_VERSION" >> $GITHUB_OUTPUT
+            echo "Previous version from tag: $PREV_VERSION"
+          else
+            # Fallback to checking previous commit if no tags exist
+            git checkout HEAD~1 -- pyproject.toml 2>/dev/null || echo "No previous version found"
+            if [ -f pyproject.toml ]; then
+              PREV_VERSION=$(grep "^version = " pyproject.toml | sed "s/version = \"\([^\"']*\)\"/\1/" | tr -d ' ')
+              echo "previous_version=$PREV_VERSION" >> $GITHUB_OUTPUT
+              echo "Previous version from commit: $PREV_VERSION"
+            else
+              echo "previous_version=" >> $GITHUB_OUTPUT
+              echo "No previous version found"
+            fi
+            # Restore current version
+            git checkout HEAD -- pyproject.toml
+          fi
+
+      - name: Check if version changed
+        id: version_changed
+        run: |
+          CURRENT="${{ steps.current_version.outputs.version }}"
+          PREVIOUS="${{ steps.previous_version.outputs.previous_version }}"
+
+          echo "CURRENT=$CURRENT"
+          echo "PREVIOUS=$PREVIOUS"
+
+          if [ "$CURRENT" != "$PREVIOUS" ] && [ -n "$CURRENT" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed from $PREVIOUS to $CURRENT"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged or invalid"
+          fi
+
+      - name: Create Release
+        if: steps.version_changed.outputs.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.current_version.outputs.version }}"
+          TAG_NAME="v$VERSION"
+
+          # Create and push tag
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+          # Extract current version notes from CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            # Find the section for the current version
+            # This regex looks for the version header and captures until next version header
+            CURRENT_NOTES=$(awk -v version="$VERSION" '
+              BEGIN { in_section=0; found=0 }
+              /^## \[/ {
+                if (in_section) exit
+                if ($0 ~ "\\[" version "\\]") {
+                  in_section=1
+                  found=1
+                  next
+                }
+              }
+              in_section { print }
+            ' CHANGELOG.md)
+
+            if [ -n "$CURRENT_NOTES" ]; then
+              # Create a temporary file with the extracted notes
+              echo "$CURRENT_NOTES" > /tmp/release_notes.md
+              gh release create "$TAG_NAME" \
+                --title "Release $TAG_NAME" \
+                --notes-file /tmp/release_notes.md
+            else
+              # Fallback to generated notes if section not found
+              gh release create "$TAG_NAME" \
+                --title "Release $TAG_NAME" \
+                --generate-notes
+            fi
+          else
+            # No CHANGELOG.md found, use generated notes
+            gh release create "$TAG_NAME" \
+              --title "Release $TAG_NAME" \
+              --generate-notes
+          fi
+
+      - name: Output result
+        run: |
+          if [ "${{ steps.version_changed.outputs.changed }}" == "true" ]; then
+            echo "✅ Created release for version ${{ steps.current_version.outputs.version }}"
+          else
+            echo "ℹ️ No version change detected, skipping release creation"
+          fi
