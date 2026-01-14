@@ -72,7 +72,7 @@ dependencies:
   - python=3.12
   - pip
   - pip:
-    - -r https://raw.githubusercontent.com/linkFISH-Consulting/lf_python_utils/main/requirements.txt
+    - -r https://raw.githubusercontent.com/linkFISH-Consulting/python-dbt-stack/main/requirements.txt
 ```
 
 ## Updating Dependencies in this Repo

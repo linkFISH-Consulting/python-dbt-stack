@@ -1,6 +1,6 @@
 [project]
 name = "lf-dbt"
-version = "0.1.3"
+version = "0.1.4"
 description = "UV Project to fix Python and DBT dependencies"
 readme = "README.md"
 authors = [
@@ -16,6 +16,7 @@ dependencies = [
     "typer",
     "python-dotenv",
     "ruamel-yaml",
+    "openpyxl>=3.1.5", # excel
     # DBT
     "dbt-core>=1.9.8,<1.10", # Usually limited by our dbt-sqlserver dependency
     "dbt-duckdb>=1.9.4,<1.10",

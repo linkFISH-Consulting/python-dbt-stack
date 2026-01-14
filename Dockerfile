@@ -33,7 +33,32 @@ ENV UV_LINK_MODE=copy
 # Ensure installed tools can be executed out of the box
 ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
-# ------------------------------- Dependencies ------------------------------- #
+# -------------------------------- MSSQL ODBC -------------------------------- #
+
+RUN --mount=target=/var/lib/apt/lists,type=cache \
+    --mount=type=cache,target=/var/cache/apt,type=cache \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    gnupg \
+    wget \
+    curl
+
+# Add Microsoft repository for ODBC Driver 18 for SQL Server (dbt-sqlserver)
+# Using the new approach since apt-key was depricated
+RUN --mount=target=/var/lib/apt/lists,type=cache \
+    --mount=type=cache,target=/var/cache/apt,type=cache \
+    mkdir -p /etc/apt/keyrings && \
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list
+
+RUN --mount=target=/var/lib/apt/lists,type=cache \
+    --mount=type=cache,target=/var/cache/apt,type=cache \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    msodbcsql18
+
+# ---------------------------- Python Dependencies --------------------------- #
 
 # Git is needed for `dbt deps`
 RUN apt-get update && apt-get install -y git \

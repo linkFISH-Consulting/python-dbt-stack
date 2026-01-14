@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-01-14
+
+- Added MSSQL odbc driver 18
+
 ## [0.1.3] - 2026-01-12
 
 - Github Action Test
@@ -25,3 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2025-12-09
 
 -  Pinned duckdb to 1.3.2. to avoid this [issue](https://github.com/duckdb/duckdb/issues/19171)
+
+
+[0.1.4]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.3...v0.1.4
