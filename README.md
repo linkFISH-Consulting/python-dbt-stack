@@ -12,27 +12,54 @@ The container provides a full-fledged Python and DBT environment.
 To build the container and run commands:
 
 ```bash
-# build the container, only needed once.
-docker compose build
+# get the latest image
+docker pull ghcr.io/linkfish-consulting/python-dbt-stack:latest
+# ... or a specific version
+docker pull ghcr.io/linkfish-consulting/python-dbt-stack:v0.1.4
 
-# to run dbt commands, e.g. check version
-docker run -it --rm lf-dbt dbt --version
+# create a tag, to access more conveniently
+docker tag ghcr.io/linkfish-consulting/python-dbt-stack:v0.1.4 lf-dbt
+
+# run a command as the default non-root user (lf_admin)
+docker run --rm -it lf-dbt dbt --version
 ```
 
-Usually you will need to mount data and project folders into the container.
-Either add the --volume command
+Usually you will need to mount data and project folders into the container via the `--volume` command:
 
 ```bash
 docker run -it --rm --volume /coasti:/coasti lf-dbt dbt --version
 ```
 
-or, if more involved, use a docker-compose.yml
+If you want to run as the root user, the usual `-u root` will not be sufficient, because we fix permissions and then drop to lf_admin.
+
+```bash
+# skip our entrypoint to run as root
+docker run -it --rm -u root --entrypoint="" lf-dbt bash
+```
+
+### Environement Variables
+
+The Container supports the following environment variables.
+Specify as e.g. `docker run -e EXTRA_GIDS=1002,1003`
+
+- `PUID` set the user ID for lf_admin
+- `GUID` set the group ID for lf_admin
+- `EXTRA_GIDS` add lf_admin to extra groups, e.g. to be able to read from folder mounts owned by other users.
+
+
+### Using Docker Compose
+
+For a more involved setup:
 
 ```yaml
 # docker-compose.yml
 services:
     lf-dbt:
-        # ... other settings ...
+        image: ghcr.io/linkfish-consulting/python-dbt-stack:latest
+        # other settings, e.g.
+        environment:
+            - PUID: 1001
+            - GUID: 1001
         volumes:
             - /coasti/data/:/coasti/data/
             - /coasti/products/haushaltplus/:/coasti/products/haushaltplus/
@@ -112,6 +139,13 @@ uv pip compile pyproject.toml -o requirements.txt
 ```bash
 # Find out which python exe uv will use (could be system, conda, venv, ...)
 uv python find
+```
+
+## Building the container locally
+
+```bash
+docker compose build
+docker run -it --rm lf-dbt bash
 ```
 
 ## Furhter Reading

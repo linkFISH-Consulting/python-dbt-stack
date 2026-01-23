@@ -13,8 +13,10 @@ ENV HOSTNAME="lf-dbt"
 ENV ACCEPT_EULA=Y
 
 # Setup a non-root user
-RUN groupadd --system --gid 999 lf_admin \
-    && useradd --system --gid 999 --uid 999 --create-home lf_admin
+ENV GROUP_ID=1000
+ENV USER_ID=1000
+RUN groupadd --system --gid $GROUP_ID lf_admin \
+    && useradd --system --gid $GROUP_ID --uid $USER_ID --create-home lf_admin
 
 # -------------------------------- UV Settings ------------------------------- #
 
@@ -44,7 +46,8 @@ RUN --mount=type=cache,sharing=locked,target=/var/lib/apt/lists \
     gnupg \
     wget \
     curl \
-    git
+    git \
+    gosu
 
 
 # Add Microsoft repository for ODBC Driver 18 for SQL Server (dbt-sqlserver)
@@ -82,8 +85,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT []
+# Custom entrypoint to fix permissions, don't invoke `uv`
+ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Use the non-root user to run our application
-USER lf_admin
+# Default command (can be overridden)
+CMD ["bash"]
