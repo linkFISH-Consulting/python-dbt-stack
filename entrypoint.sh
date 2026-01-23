@@ -17,14 +17,14 @@ fi
 # Only change group ID if it differs from target
 # We set a default GROUP_ID in the Dockerfile.
 if [ "$CURRENT_GID" != "$GROUP_ID" ]; then
-    echo "Changing lf_admin group ID to $GROUP_ID"
+    # echo "Changing lf_admin group ID to $GROUP_ID"
     groupmod -g $GROUP_ID lf_admin
     USER_CHANGED=true
 fi
 
 # Only change user ID if it differs from target
 if [ "$CURRENT_UID" != "$USER_ID" ]; then
-    echo "Changing lf_admin user ID to $USER_ID"
+    # echo "Changing lf_admin user ID to $USER_ID"
     usermod -u $USER_ID -g $GROUP_ID lf_admin > /dev/null 2>&1
     USER_CHANGED=true
 fi
@@ -43,7 +43,7 @@ if [ -n "$EXTRA_GIDS" ]; then
 fi
 
 if [ "$USER_CHANGED" = true ]; then
-    echo "Chaning permissions of /home/lf_admin"
+    # echo "Chaning permissions of /home/lf_admin"
     chown -R $USER_ID:$GROUP_ID /home/lf_admin
 fi
 
