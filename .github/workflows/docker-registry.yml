@@ -29,10 +29,6 @@ jobs:
                       type=ref,event=tag
                       type=semver,pattern={{version}}
                       type=raw,value=latest,enable=true
-                      type=match,pattern=v(.*),group=1
-                      type=semver,pattern={{major}}.{{minor}}
-                      type=semver,pattern={{major}}
-                      type=raw,value=latest,enable=true
 
 
             - name: Checkout
