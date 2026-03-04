@@ -25,12 +25,18 @@ dependencies = [
     "dbt-postgres>=1.9.0,<1.10",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [dependency-groups]
 dev-dependencies = [
     "ruff",
     "typing_extensions",
 ]
+
+# We dont have a package, but want to enable `uv pip install`
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = []
+include-package-data = false
+
