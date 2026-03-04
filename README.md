@@ -5,7 +5,34 @@
 The idea is to have one central reference for all our Python dependencies, DBT being one of them.
 UV makes this possible because it allows us to manage Python packages via a central lock file (`uv.lock`), which can be updated conveniently, as new versions of dependencies are released.
 
-## Using the Docker Container
+## Stack on Host
+
+**using uv** and a dedicated venv
+
+```bash
+# create venv in your project dir
+uv venv --python 3.12
+
+# activate, linux
+source ./.venv/bin/activate
+
+# win
+.venv\Scripts\activate
+
+# install latest
+uv pip install "git+https://github.com/linkFISH-Consulting/python-dbt-stack"
+
+# or a specific version
+uv pip install "git+https://github.com/linkFISH-Consulting/python-dbt-stack@v0.1.6"
+```
+
+**using pip**
+
+```bash
+python -m pip install "git+https://github.com/linkFISH-Consulting/python-dbt-stack"
+```
+
+## Stack in Docker Container
 
 The container provides a full-fledged Python and DBT environment.
 
@@ -47,7 +74,7 @@ Specify as e.g. `docker run -e EXTRA_GIDS=1002,1003`
 - `EXTRA_GIDS` add lf_admin to extra groups, e.g. to be able to read from folder mounts owned by other users.
 
 
-### Using Docker Compose
+### Docker Compose
 
 For a more involved setup:
 
@@ -79,7 +106,7 @@ docker run -it --rm --workdir /coasti/products/haushaltplus \
     lf-dbt bash -c "$INIT_CMD dbt version"
 ```
 
-## Using with Conda
+## Stack with Conda
 
 We keep the requirements.txt up to date with _locked_ Versions of all packages,
 so you can simply include it in your Conda environment.
