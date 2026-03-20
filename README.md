@@ -20,10 +20,10 @@ source ./.venv/bin/activate
 .venv\Scripts\activate
 
 # install latest
-uv pip install "git+https://github.com/linkFISH-Consulting/python-dbt-stack"
+uv pip install -r requirements.txt "git+https://github.com/linkFISH-Consulting/python-dbt-stack"
 
 # or a specific version
-uv pip install "git+https://github.com/linkFISH-Consulting/python-dbt-stack@v0.1.6"
+uv pip install -r requirements.txt "git+https://github.com/linkFISH-Consulting/python-dbt-stack@v0.1.6"
 ```
 
 **using pip**
@@ -45,23 +45,23 @@ docker pull ghcr.io/linkfish-consulting/python-dbt-stack:latest
 docker pull ghcr.io/linkfish-consulting/python-dbt-stack:v0.1.4
 
 # create a tag, to access more conveniently
-docker tag ghcr.io/linkfish-consulting/python-dbt-stack:v0.1.4 lf-dbt
+docker tag ghcr.io/linkfish-consulting/python-dbt-stack:v0.1.4 lf-py-stack
 
 # run a command as the default non-root user (lf_admin)
-docker run --rm -it lf-dbt dbt --version
+docker run --rm -it lf-py-stack dbt --version
 ```
 
 Usually you will need to mount data and project folders into the container via the `--volume` command:
 
 ```bash
-docker run -it --rm --volume /coasti:/coasti lf-dbt dbt --version
+docker run -it --rm --volume /coasti:/coasti lf-py-stack dbt --version
 ```
 
 If you want to run as the root user, the usual `-u root` will not be sufficient, because we fix permissions and then drop to lf_admin.
 
 ```bash
 # skip our entrypoint to run as root
-docker run -it --rm -u root --entrypoint="" lf-dbt bash
+docker run -it --rm -u root --entrypoint="" lf-py-stack bash
 ```
 
 ### Environement Variables
@@ -81,7 +81,7 @@ For a more involved setup:
 ```yaml
 # docker-compose.yml
 services:
-    lf-dbt:
+    lf-py-stack:
         image: ghcr.io/linkfish-consulting/python-dbt-stack:latest
         # other settings, e.g.
         environment:
@@ -94,7 +94,7 @@ services:
 
 then run with
 ```bash
-docker compose -f /path/to/docker-compose.yml run -it --rm lf-dbt dbt --version
+docker compose -f /path/to/docker-compose.yml run -it --rm lf-py-stack dbt --version
 ```
 
 Often you will need some setup, like loading environment variables inside the container.
@@ -103,7 +103,7 @@ Then, it can be helpful to define an init command that can be reused:
 ```bash
 INIT_CMD="set -a; source ./config/.env; set +a;"
 docker run -it --rm --workdir /coasti/products/haushaltplus \
-    lf-dbt bash -c "$INIT_CMD dbt version"
+    lf-py-stack bash -c "$INIT_CMD dbt version"
 ```
 
 ## Stack with Conda
@@ -129,6 +129,113 @@ dependencies:
     - -r https://raw.githubusercontent.com/linkFISH-Consulting/python-dbt-stack/main/requirements.txt
 ```
 
+## Orchestration
+
+We now include some lightweight tools to orchestrate simple pipelines via hamilton.
+
+To get started, create a python file as shown below, and then run it with python, providing paramters as needed.
+
+```bash
+python orchestration.py --help
+python orchestration.py run
+```
+
+```python
+# orchestration.py
+
+from lf_py_stack.orchestration import StepResult, cli_app, get_logger, run_cli_command
+
+
+def step_a() -> StepResult:
+    """A dummy step"""
+    print("Hello from step_a")
+    return StepResult("PASS", "All good")
+
+def step_b(step_a: StepResult, env: dict) -> StepResult:
+    """Step that uses env vars and previous results"""
+    print("Hello from step_b")
+    print(f"Current shell: {env.get('SHELL')}")
+    print(f"Previous step restul: {step_a.message}")
+    return StepResult("PASS", "Also all good")
+
+def step_c(step_b: StepResult) -> StepResult:
+    """
+    To denote the sequence, make steps depende on previous ones via arguments.
+
+    You do not _have to use_ `step_b` in here.
+    """
+    print("Hello from step_c")
+    try:
+        _will_fail = 1 / 0
+        return StepResult("PASS", "All good")
+    except ZeroDivisionError:
+        return StepResult("FAIL", "Something went wrong")
+
+def step_d(step_c : StepResult, env: dict) -> StepResult:
+    """
+    We can also log everything we do (to send via email) and run cli commands
+    """
+    log = get_logger()
+    log.info("Hello from step_d")
+    code, msg = run_cli_command("ls -l", log=log, env=env, print_to_stdout=False)
+    return StepResult("PASS" if code == 0 else "FAIL", msg)
+
+
+if __name__ == "__main__":
+    # the app handles the cli interface and log file setup for us
+    cli_app()
+```
+
+Will produce the following output:
+
+```raw
+> python ./orchestration.py run
+Running the following steps:
+         ╷
+  Step   │ Description
+ ════════╪════════════════════════════════════════════════════════════════════════════
+  step_a │ A dummy step
+ ────────┼────────────────────────────────────────────────────────────────────────────
+  step_b │ Step that uses env vars and previous results
+ ────────┼────────────────────────────────────────────────────────────────────────────
+  step_c │ To denote the sequence, make steps depende on previous ones via arguments.
+         │
+         │ You do not _have to use_ `step_b` in here.
+ ────────┼────────────────────────────────────────────────────────────────────────────
+  step_d │ We can also log everything we do (to send via email) and run cli commands
+         ╵
+
+Hello from step_a
+Hello from step_b
+Current shell: /bin/zsh
+Previous step restul: All good
+Hello from step_c
+Hello from step_d
+                              Orchestration run complete
+         ╷        ╷
+  Step   │ Status │ Log
+ ════════╪════════╪═══════════════════════════════════════════════════════════════════
+  step_a │ PASS   │ All good
+ ────────┼────────┼───────────────────────────────────────────────────────────────────
+  step_b │ PASS   │ Also all good
+ ────────┼────────┼───────────────────────────────────────────────────────────────────
+  step_c │ FAIL   │ Something went wrong
+ ────────┼────────┼───────────────────────────────────────────────────────────────────
+  step_d │ PASS   │ total 392
+         │        │ -rw-r--r--@ 1 paul  staff    1527 Mar 19 13:09 CHANGELOG.md
+         │        │ -rw-r--r--@ 1 paul  staff     677 Mar 19 11:29 docker-compose.yml
+         │        │ -rw-r--r--@ 1 paul  staff    3303 Mar 19 11:51 Dockerfile
+         │        │ -rwxr-xr-x  1 paul  staff    1482 Feb  4 16:54 entrypoint.sh
+         │        │ -rw-r--r--  1 paul  staff    1076 Dec  8 14:01 LICENSE
+         │        │ -rw-r--r--@ 1 paul  staff    1873 Mar 19 13:13 pyproject.toml
+         │        │ -rw-r--r--@ 1 paul  staff    5053 Mar 19 13:25 README.md
+         │        │ -rw-r--r--  1 paul  staff    4941 Jan 14 13:38 requirements.txt
+         │        │ drwxr-xr-x@ 3 paul  staff      96 Mar 19 11:19 src
+         │        │ -rw-r--r--  1 paul  staff  157377 Mar 19 11:26 uv.lock
+         │        │
+         ╵        ╵
+```
+
 ## Updating Dependencies in this Repo
 
 - Clone to your Device
@@ -146,7 +253,7 @@ uv tree --outdated
 
 - Update dependencies and the `uv.lock`
 ```bash
-uv sync --upgrade --no-install-project
+uv sync --upgrade
 ```
 
 - Put the changes into `requirements.txt`
@@ -172,7 +279,7 @@ uv python find
 
 ```bash
 docker compose build
-docker run -it --rm lf-dbt bash
+docker run -it --rm lf-py-stack bash
 ```
 
 ## Furhter Reading

@@ -1,10 +1,10 @@
 
-name: lf-dbt
+name: lf-py-stack
 services:
-    lf-dbt:
-        container_name: lf-dbt
-        image: lf-dbt
-        hostname: lf-dbt-container
+    lf-py-stack:
+        container_name: lf-py-stack
+        image: lf-py-stack
+        hostname: lf-py-stack-container
         build:
             context: .
             dockerfile: Dockerfile
