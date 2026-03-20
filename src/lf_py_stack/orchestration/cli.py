@@ -33,6 +33,7 @@ from dotenv import dotenv_values
 from hamilton import driver, telemetry
 from hamilton.base import DictResult
 
+from .mail import mail_app
 from .steps import StepResult, log_step_nodes_table, log_step_results_table
 
 telemetry.disable_telemetry()
@@ -162,6 +163,8 @@ def list_steps():
 
     log_step_nodes_table(steps, show_dependencies=True, show_docstrings=True)
 
+
+cli_app.add_typer(mail_app, name="mail")
 
 # ---------------------------------------------------------------------------- #
 #                  Helper functions (not part of Hamilton DAG)                 #
