@@ -1,7 +1,6 @@
 """Thin helper functions to send emails via python"""
 
 import logging
-import os
 import smtplib
 import ssl
 from email import encoders
@@ -12,6 +11,8 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+
+from .env_vars import env
 
 
 def send_mail(
@@ -24,7 +25,7 @@ def send_mail(
     username: str | None = None,
     password: str | None = None,
     from_name: str | None = None,
-    attachments: list[Path] | None = None,
+    attachments: list[Path] | Path | None = None,
     use_tls: bool = True,
     use_ssl: bool = False,
     verbose: bool = False,
@@ -39,13 +40,13 @@ def send_mail(
     - LFPY_MAIL_SMTP_SERVER
     - LFPY_MAIL_SMTP_PORT
     - LFPY_MAIL_USERNAME
-    - LFPY_MAIL_PASSWORD
+    - LFPY_MAIL_PASSWORD (or LFPY_MAIL_PASSWORD_FILE)
     """
 
     if log is None:
         log = logging.getLogger("orchestration")
 
-    smtp_server, port, username, password = _prep_credentials_from_env_vars(
+    smtp_server, port, username, password = env.mail.get_defaults_from_env_vars(
         smtp_server, port, username, password
     )
 
@@ -65,22 +66,24 @@ def send_mail(
     else:
         msg.attach(MIMEText(body, "plain"))
 
-    if attachments:
-        for attachment_path in attachments:
-            if attachment_path.exists():
-                with attachment_path.open("rb") as attachment:
-                    part = MIMEBase("application", "octet-stream")
-                    part.set_payload(attachment.read())
-                    encoders.encode_base64(part)
-                    part.add_header(
-                        "Content-Disposition",
-                        f"attachment; filename={attachment_path.name}",
-                    )
-                    msg.attach(part)
-            else:
-                typer.echo(
-                    f"Warning: Attachment not found: {attachment_path}", err=True
+    if attachments is None:
+        attachments = []
+    elif isinstance(attachments, (Path, str)):
+        attachments = [Path(attachments)]
+
+    for attachment_path in attachments:
+        if attachment_path is not None and attachment_path.exists():
+            with attachment_path.open("rb") as attachment:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename={attachment_path.name}",
                 )
+                msg.attach(part)
+        else:
+            typer.echo(f"Warning: Attachment not found: {attachment_path}", err=True)
 
     if use_ssl:
         context = ssl.create_default_context()
@@ -104,33 +107,19 @@ def send_mail(
             server.send_message(msg)
 
 
-def _prep_credentials_from_env_vars(
-    smtp_server: str | None = None,
-    port: int | None = None,
-    username: str | None = None,
-    password: str | None = None,
-):
-    """Fill credentials that were not provided from env vars or defaults."""
-
-    smtp_server = smtp_server or os.getenv("LFPY_MAIL_SMTP_SERVER")
-    if smtp_server is None:
-        raise ValueError("Pass --smtp_server or set env var LFPY_MAIL_SMTP_SERVER")
-
-    if port is None:
-        port = int(os.getenv("LFPY_MAIL_SMTP_PORT", 587))
-
-    if username is None:
-        username = os.getenv("LFPY_MAIL_USERNAME", "")
-
-    if password is None:
-        password = os.getenv("LFPY_MAIL_PASSWORD", "")
-
-    return smtp_server, port, username, password
-
-
 # --------------------------------- Typer app -------------------------------- #
 
-mail_app = typer.Typer(help="CLI tool to send emails via SMTP")
+mail_app = typer.Typer(
+    help="""
+CLI tool to send emails via SMTP
+
+Uses the following env variables, if no credentials are provided:
+- LFPY_MAIL_SMTP_SERVER
+- LFPY_MAIL_SMTP_PORT
+- LFPY_MAIL_USERNAME
+- LFPY_MAIL_PASSWORD (or LFPY_MAIL_PASSWORD_FILE)
+"""
+)
 
 
 @mail_app.command()
@@ -208,17 +197,9 @@ def send(
         typer.Option("--verbose", help="Enable SMTP debug output"),
     ] = False,
 ):
-    """
-    Send an email via SMTP.
+    """Send an email via SMTP."""
 
-    Uses the following env variables, if no credentials are provided:
-    - LFPY_MAIL_SMTP_SERVER
-    - LFPY_MAIL_SMTP_PORT
-    - LFPY_MAIL_USERNAME
-    - LFPY_MAIL_PASSWORD
-    """
-
-    body_to_use : str | Path
+    body_to_use: str | Path
     if body_file is not None:
         assert body is None, "Provide either body or body_file"
         body_to_use = body_file
@@ -280,17 +261,9 @@ def test(
         typer.Option("--verbose", help="Enable SMTP debug output"),
     ] = False,
 ):
-    """
-    Test SMTP connection without sending an email.
+    """Test SMTP connection without sending an email."""
 
-    Uses the following env variables, if no credentials are provided:
-    - LFPY_MAIL_SMTP_SERVER
-    - LFPY_MAIL_SMTP_PORT
-    - LFPY_MAIL_USERNAME
-    - LFPY_MAIL_PASSWORD
-    """
-
-    smtp_server, port, username, password = _prep_credentials_from_env_vars(
+    smtp_server, port, username, password = env.mail.get_defaults_from_env_vars(
         smtp_server, port, username, password
     )
 

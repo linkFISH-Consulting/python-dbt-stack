@@ -23,7 +23,6 @@ import inspect
 import os
 import sys
 from collections.abc import Callable
-from datetime import datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Annotated
@@ -33,6 +32,7 @@ from dotenv import dotenv_values
 from hamilton import driver, telemetry
 from hamilton.base import DictResult
 
+from .env_vars import env
 from .mail import mail_app
 from .steps import StepResult, log_step_nodes_table, log_step_results_table
 
@@ -61,25 +61,36 @@ def run(
         typer.Option("--env-file", help="Load environment variables from this file"),
     ] = None,
     log_level: Annotated[
-        str,
+        str | None,
         typer.Option(
             "--log-level",
             help="Set the log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+            envvar="LFPY_LOG_LEVEL",
         ),
-    ] = "INFO",
+    ] = None,
     log_file: Annotated[
-        Path,
-        typer.Option("--log-file", help="Set the log file path"),
-    ] = Path(f"./logs/orchestration_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
+        Path | None,
+        typer.Option(
+            "--log-file",
+            help="Set the log file path. Wont log to file if not set.",
+            envvar="LFPY_LOG_FILE",
+        ),
+    ] = None,
     # convenience: pass some dbt flags
     target: Annotated[
         str | None,
-        typer.Option("--target", help="Set the dbt target. Like DBT_TARGET env var."),
+        typer.Option(
+            "--target",
+            help="Set the dbt target.",
+            envvar="DBT_TARGET",
+        ),
     ] = None,
     profile: Annotated[
         str | None,
         typer.Option(
-            "--profile", help="Set the dbt profile. Like DBT_PROFILE env var."
+            "--profile",
+            help="Set the dbt profile.",
+            envvar="DBT_PROFILE",
         ),
     ] = None,
 ):
@@ -87,17 +98,25 @@ def run(
     Run the orchestration pipeline.
     """
 
-    env = dict(os.environ)
+    dotenv = dict(os.environ)
     if env_file:
-        env.update({k: v for k, v in dotenv_values(env_file).items() if v is not None})
-    if target is not None:
-        env["DBT_TARGET"] = target
-    if profile is not None:
-        env["DBT_PROFILE"] = profile
+        dotenv.update(
+            {k: v for k, v in dotenv_values(env_file).items() if v is not None}
+        )
 
-    env.setdefault("LFPY_LOG_LEVEL", log_level.upper())
-    env.setdefault("LFPY_LOG_FILE", str(log_file.absolute()))
-    os.environ.update(env)  # Merge back
+    # We have no standardized handling for dbt variables yet.
+    if target is not None:
+        dotenv["DBT_TARGET"] = target
+    if profile is not None:
+        dotenv["DBT_PROFILE"] = profile
+
+    os.environ.update(dotenv)  # Merge back
+
+    # For logging, we have standardized helpers to set and get
+    if log_level is not None:
+        env.logging.log_level = log_level
+    if log_file is not None:
+        env.logging.log_file = log_file
 
     # as of now, we always invoke the app from a main module.
     # if this changes, we have to pass it via the app or an option
@@ -146,7 +165,6 @@ def run(
     step_results: dict[str, StepResult] = driver.execute(
         final_vars=steps_to_run,  # type: ignore
         overrides=overrides,
-        inputs={"env": env},
     )
 
     log_step_results_table(
