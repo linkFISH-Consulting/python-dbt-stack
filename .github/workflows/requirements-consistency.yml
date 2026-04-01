@@ -50,14 +50,18 @@ jobs:
         run: uv sync --locked --no-dev
 
       - name: Generate requirements.txt from uv.lock
-        run: uv pip compile pyproject.toml -o requirements.temp.txt
+        run: uv export --locked --no-hashes -o requirements.temp.txt
 
       - name: Compare requirements.txt files
         run: |
-          if cmp -s requirements.txt requirements.temp.txt; then
+          DIFF=$(diff -y --suppress-common-lines ./requirements.txt requirements.temp.txt || true)
+          if [ $(echo "$DIFF" | wc -l) -le 1 ]; then
             echo "✅ requirements.txt is consistent with uv.lock"
           else
-            echo "❌ requirements.txt is NOT consistent with uv.lock"
-            echo "Run 'uv pip compile pyproject.toml -o requirements.txt' to update it"
+            echo "❌ requirements.txt is NOT consistent with uv.lock:"
+            echo "------------"
+            echo "$DIFF"
+            echo "------------"
+            echo "Run 'uv export --locked --no-hashes -o requirements.txt' to update it"
             exit 1
           fi

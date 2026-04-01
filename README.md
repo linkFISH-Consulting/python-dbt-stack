@@ -297,7 +297,7 @@ uv sync --upgrade
 
 - Put the changes into `requirements.txt`
 ```bash
-uv pip compile pyproject.toml -o requirements.txt
+uv export --locked --no-hashes -o requirements.txt
 ```
 
 - Update changelog, and possibly version number in pyproject.toml
