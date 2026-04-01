@@ -58,7 +58,12 @@ def run(
     ] = [],
     env_file: Annotated[
         Path | None,
-        typer.Option("--env-file", help="Load environment variables from this file"),
+        typer.Option(
+            "--env-file",
+            help="Load environment variables from this file",
+            exists=True,
+            dir_okay=False,
+        ),
     ] = None,
     log_level: Annotated[
         str | None,
