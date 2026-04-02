@@ -7,7 +7,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim AS base
 
 ENV PYTHONIOENCODING=utf-8
 ENV LANG=C.UTF-8
-ENV HOSTNAME="lf-dbt"
+ENV HOSTNAME="lf-py-stack-container"
 
 # for mssql odbc driver apt install
 ENV ACCEPT_EULA=Y
@@ -64,6 +64,10 @@ RUN --mount=target=/var/lib/apt/lists,type=cache \
     apt-get install -y --no-install-recommends \
     msodbcsql18
 
+
+# Include duckdb ui, we should match the version to the one in pyproject
+# RUN curl https://install.duckdb.org | DUCKDB_VERSION=1.4.4 sh
+
 # ---------------------------- Python Dependencies --------------------------- #
 
 # Either get our python project from the host, or from git
@@ -75,7 +79,7 @@ WORKDIR /app
 
 # Install the project's dependencies using the lockfile and settings
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-install-project --no-dev
+    uv sync --locked --no-dev
 
 # In contrast to the uv example, we do not have a project - we only want to get
 # our dependencies in.

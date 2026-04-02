@@ -1,0 +1,67 @@
+name: Verify Version consistency
+
+on:
+  pull_request:
+    paths:
+      - pyproject.toml
+      - 'uv.lock'
+      - 'requirements.txt'
+
+jobs:
+  verify-version:
+    name: between pyproject and uv.lock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Extract package name and version from pyproject.toml
+        id: versions
+        run: |
+          PACKAGE_NAME=$(grep -E '^name\s*=\s*"[^"]+"' pyproject.toml | cut -d '"' -f 2)
+          PYPROJECT_VERSION=$(grep -E '^version\s*=\s*"[^"]+"' pyproject.toml | cut -d '"' -f 2)
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "PYPROJECT_VERSION=$PYPROJECT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get version from uv.lock
+        id: uv_version
+        run: |
+          UVLOCK_VERSION=$(grep -A2 '"${{ steps.versions.outputs.PACKAGE_NAME }}"' uv.lock | awk '/version/ {print $3}' | tr -d '"')
+          echo "UVLOCK_VERSION=$UVLOCK_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        run: |
+          if [ "${{ steps.versions.outputs.PYPROJECT_VERSION }}" != "${{ steps.uv_version.outputs.UVLOCK_VERSION }}" ]; then
+            echo "❌ Version mismatch between pyproject.toml (${{ steps.versions.outputs.PYPROJECT_VERSION }}) and uv.lock (${{ steps.uv_version.outputs.UVLOCK_VERSION }})"
+            exit 1
+          else
+            echo "✅ Version in pyproject.toml matches uv.lock (${{ steps.versions.outputs.PYPROJECT_VERSION }})"
+          fi
+
+  verify-requirements:
+    name: between uv.lock and requirements.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install dependencies
+        run: uv sync --locked --no-dev
+
+      - name: Generate requirements.txt from uv.lock
+        run: uv export --locked --no-hashes -o requirements.temp.txt
+
+      - name: Compare requirements.txt files
+        run: |
+          DIFF=$(diff -y --suppress-common-lines ./requirements.txt requirements.temp.txt || true)
+          if [ $(echo "$DIFF" | wc -l) -le 1 ]; then
+            echo "✅ requirements.txt is consistent with uv.lock"
+          else
+            echo "❌ requirements.txt is NOT consistent with uv.lock:"
+            echo "------------"
+            echo "$DIFF"
+            echo "------------"
+            echo "Run 'uv export --locked --no-hashes -o requirements.txt' to update it"
+            exit 1
+          fi
