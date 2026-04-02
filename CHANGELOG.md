@@ -15,6 +15,7 @@ TLDR:
 ### Added
 
 - Orchestration tools via Hamilton to build minimal scripts to run a sequence of actions.
+- Docs folder, we now separate README content a bit better.
 
 ### Changed
 
