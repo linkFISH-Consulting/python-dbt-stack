@@ -152,6 +152,8 @@ def run(
         steps={sn: steps[sn] for sn in steps_to_run},
         show_dependencies=False,
         show_docstrings=True,
+        print_to_stdout=True,
+
     )
 
     # overrides allow us to avoid invoking steps from the DAG
@@ -175,6 +177,7 @@ def run(
     log_step_results_table(
         steps=list(step_results.values()) + list(overrides.values()),
         title="Orchestration run complete",
+        print_to_stdout=True,
     )
 
 
