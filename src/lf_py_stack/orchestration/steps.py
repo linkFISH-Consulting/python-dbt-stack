@@ -6,6 +6,7 @@ We also have some helpers to log them.
 
 import inspect
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
@@ -49,6 +50,7 @@ def log_step_nodes_table(
     show_docstrings: bool = True,
     log: logging.Logger | None = None,
     print_to_stdout: bool = True,
+    return_colorized: bool = False,
 ):
     """
     Print, log, and return a table of step nodes (the functions in hamiltons DAG)
@@ -62,6 +64,7 @@ def log_step_nodes_table(
         show_docstrings: If True, shows description column (default: True)
         log: log into the provided logger, passes `extra={"log_to_cli": False}`
         print_to_stdout: Whether to show the table in stdout.
+        return_colorized: Are ANSI Seqs allowed in returned text? Does not affect print.
 
     Note:
         We chose to handle printing/logging separately here, because the log handler
@@ -71,7 +74,7 @@ def log_step_nodes_table(
         print("No steps configured")
         return "No steps configured"
 
-    console = Console()
+    console = Console(width=90)
 
     # https://rich.readthedocs.io/en/stable/appendix/box.html#appendix-box
     table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD)
@@ -106,6 +109,8 @@ def log_step_nodes_table(
     if log is not None:
         log.info(f"\n{text}", extra={"log_to_cli": False})
 
+    if not return_colorized:
+        text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
     return text
 
 
@@ -114,6 +119,7 @@ def log_step_results_table(
     title: str | None = None,
     log: logging.Logger | None = None,
     print_to_stdout: bool = True,
+    return_colorized: bool = False,
 ):
     """
     Print, log, and return a table of StepResults.
@@ -125,12 +131,13 @@ def log_step_results_table(
         title: Optional title for the table
         log: log into the provided logger, passes `extra={"log_to_cli": False}`
         print_to_stdout: Whether to show the table in stdout.
+        return_colorized: Are ANSI Seqs allowed in returned text? Does not affect print.
 
     Note:
         We chose to handle printing/logging separately here, because the log handler
         does not support colored output (yet)
     """
-    console = Console()
+    console = Console(width=90)
     table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD)
 
     table.add_column("Step", style="cyan")
@@ -164,4 +171,6 @@ def log_step_results_table(
     if log is not None:
         log.info(f"\n{text}", extra={"log_to_cli": False})
 
+    if not return_colorized:
+        text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
     return text

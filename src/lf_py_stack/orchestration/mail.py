@@ -8,7 +8,7 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
@@ -19,7 +19,7 @@ def send_mail(
     to: str,
     subject: str,
     body: str | Path,
-    body_is_html: bool = False,
+    body_format: Literal["plain", "html", "mono"] = "plain",
     smtp_server: str | None = None,
     port: int | None = None,
     username: str | None = None,
@@ -61,10 +61,14 @@ def send_mail(
     if isinstance(body, Path):
         body = body.read_text()
 
-    if body_is_html:
+    if body_format == "html":
         msg.attach(MIMEText(body, "html"))
-    else:
+    elif body_format == "plain":
         msg.attach(MIMEText(body, "plain"))
+    elif body_format == "mono":
+        body = f'<pre style="font-family: monospace, monospace; white-space: pre;">{body}</pre>'
+        msg.attach(MIMEText(body, "html"))
+
 
     if attachments is None:
         attachments = []
@@ -169,10 +173,10 @@ def send(
             dir_okay=False,
         ),
     ] = None,
-    body_is_html: Annotated[
-        bool,
-        typer.Option("--html", help="Body is HTML format"),
-    ] = False,
+    body_format: Annotated[
+        Literal["plain", "html", "mono"],
+        typer.Option("--body-format", help="Is the body in HTML format?"),
+    ] = "plain",
     attachment: Annotated[
         list[Path] | None,
         typer.Option(
@@ -221,7 +225,7 @@ def send(
             attachments=attachment,
             use_tls=use_tls,
             use_ssl=use_ssl,
-            body_is_html=body_is_html,
+            body_format=body_format,
             verbose=verbose,
         )
         typer.echo("✓ Email sent successfully!")
