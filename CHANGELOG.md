@@ -29,6 +29,10 @@ TLDR:
 
 - Renamed module from `lf-dbt` to `lf-py-stack` because we do more than shipping dbt now. This should not have much impact on existing setups, because we have not used it as a module yet.
 
+### Dependencies
+- Removed duckdb lock, now using latest again (we will need to update our duckdb minimize scripts, see [here](https://github.com/duckdb/duckdb-python/issues/392))
+- Updates Sub-dependencies
+
 ## [0.1.5] - 2026-01-23
 
 - Added Option to set user and group id, and extra groups for lf_admin.
@@ -60,6 +64,9 @@ TLDR:
 -  Pinned duckdb to 1.3.2. to avoid this [issue](https://github.com/duckdb/duckdb/issues/19171)
 
 
+[0.2.1]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.1...v0.1.2

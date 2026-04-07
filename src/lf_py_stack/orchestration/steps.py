@@ -4,9 +4,9 @@ StepResults are the objects we pass between hamiltons DAG nodes (functions)
 We also have some helpers to log them.
 """
 
-import os
 import inspect
 import logging
+import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass

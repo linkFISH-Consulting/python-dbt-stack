@@ -81,6 +81,16 @@ def run(
             envvar="LFPY_LOG_FILE",
         ),
     ] = None,
+    # We want a way to pass things into individual steps from the cli
+    step_args: Annotated[
+        list[str],
+        typer.Option(
+            "-a",
+            "--step-arg",
+            help="Pass arguments (or data) into individual steps. Usage: "
+            "-a 'step_dbt_run: --select model_to_run' -a 'step2: my_literal'",
+        ),
+    ] = [],
     # convenience: pass some dbt flags
     target: Annotated[
         str | None,
@@ -140,6 +150,15 @@ def run(
     else:
         steps_to_run = step_names
 
+    # Parse Arguments that should be available in individual steps
+    # and automatically enable them as if they were specified with --select
+    step_args_map = _parse_step_arguments(
+        step_args=step_args, valid_step_names=step_names
+    )
+    for s in step_args_map.keys():
+        if s not in steps_to_run:
+            steps_to_run.append(s)
+
     # Apply skip
     steps_to_run = [s for s in steps_to_run if s not in skip]
 
@@ -153,7 +172,6 @@ def run(
         show_dependencies=False,
         show_docstrings=True,
         print_to_stdout=True,
-
     )
 
     # overrides allow us to avoid invoking steps from the DAG
@@ -187,7 +205,12 @@ def list_steps():
     driver = _get_driver("__main__")
     steps = _module_steps("__main__", driver)
 
-    log_step_nodes_table(steps, show_dependencies=True, show_docstrings=True)
+    log_step_nodes_table(
+        steps,
+        show_dependencies=True,
+        show_docstrings=True,
+        print_to_stdout=True,
+    )
 
 
 cli_app.add_typer(mail_app, name="mail")
@@ -275,3 +298,40 @@ def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
     else:
         typer.echo(f"Error: step '{pattern}' not found in pipeline.", err=True)
         raise typer.Exit(1)
+
+
+def _parse_step_arguments(
+    step_args: list[str],
+    valid_step_names: list[str] | None = None,
+):
+    """
+    Transform a list of step_arguments into a mapping from step_name to arg.
+
+    Expects each provided string to have the form `step_name:value`
+    where `step_name` becomes the mapping key.
+
+    Optionally, we check that the provided step_names are valid, and raise otherwise.
+    """
+
+    res: dict[str, str] = {}
+
+    for step_arg in step_args:
+        split = step_arg.split(":")
+        key = split[0]
+        if len(split) > 1:
+            value = "".join(split[1:])
+        else:
+            value = ""
+        res[key] = value
+
+    if valid_step_names is not None:
+        invalid_steps = [s for s in res.keys() if str(s) not in valid_step_names]
+    else:
+        invalid_steps = []
+
+    if len(invalid_steps) != 0:
+        raise ValueError(
+            f"Steps {invalid_steps} were not recognized. Available: {valid_step_names}"
+        )
+
+    return res
