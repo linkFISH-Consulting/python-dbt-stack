@@ -16,6 +16,7 @@ TLDR:
 
 - Improved formatting of logs and summary so they are more suitable for emails.
 - This required adding more formatting options to `mail` and `log` methods.
+- Install Guide (readme and requirements.txt export)
 
 ## [0.2.0] - 2026-04-02
 
