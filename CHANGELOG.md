@@ -10,7 +10,15 @@ TLDR:
 - Features v0.1.0 (Minor Version)
 - Breaking Changes v1.0.0 (Major Version)
 
-## [0.2.0] - Upcoming
+## [0.2.1] - 2026-04-07
+
+### Fixed
+
+- Improved formatting of logs and summary so they are more suitable for emails.
+- This required adding more formatting options to `mail` and `log` methods.
+- Install Guide (readme and requirements.txt export)
+
+## [0.2.0] - 2026-04-02
 
 ### Added
 

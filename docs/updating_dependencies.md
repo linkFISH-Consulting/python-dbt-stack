@@ -20,7 +20,7 @@ uv sync --upgrade
 
 - Put the changes into `requirements.txt`
 ```bash
-uv export --locked --no-hashes -o requirements.txt
+uv export --locked --no-hashes --no-emit-project -o requirements.txt
 ```
 
 - Update changelog, and possibly version number in pyproject.toml

@@ -25,11 +25,21 @@ source ./.venv/bin/activate
 .venv\Scripts\activate
 
 # install latest
-uv pip install -r requirements.txt "git+https://github.com/linkFISH-Consulting/python-dbt-stack"
-
-# or a specific version
-uv pip install -r requirements.txt "git+https://github.com/linkFISH-Consulting/python-dbt-stack@v0.1.6"
+uv pip install git+https://github.com/linkFISH-Consulting/python-dbt-stack
 ```
+
+This will get you the latest version of our package, and latest versions of its dependencies.
+
+For even more reproducibility, a specific version, and pinned dependencies, we need to
+- get the pinned dependencies first
+- then get the matching package (without dependencies)
+
+```bash
+uv pip install https://raw.githubusercontent.com/linkFISH-Consulting/python-dbt-stack/v0.2.1/requirements.txt
+uv pip install git+https://github.com/linkFISH-Consulting/python-dbt-stack@v0.2.1 --no-deps
+```
+
+(The need for two commands is currently a known limitation, see these refs: [1](https://discuss.python.org/t/pre-pep-add-ability-to-install-a-package-with-reproducible-dependencies/99497) [2](https://github.com/astral-sh/uv/issues/5815) [3](https://github.com/astral-sh/uv/issues/15361))
 
 **using pip**
 

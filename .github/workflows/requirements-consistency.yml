@@ -50,7 +50,7 @@ jobs:
         run: uv sync --locked --no-dev
 
       - name: Generate requirements.txt from uv.lock
-        run: uv export --locked --no-hashes -o requirements.temp.txt
+        run: uv export --locked --no-hashes --no-emit-project -o requirements.temp.txt
 
       - name: Compare requirements.txt files
         run: |
@@ -62,6 +62,6 @@ jobs:
             echo "------------"
             echo "$DIFF"
             echo "------------"
-            echo "Run 'uv export --locked --no-hashes -o requirements.txt' to update it"
+            echo "Run 'uv export --locked --no-hashes --no-emit-project -o requirements.txt' to update it"
             exit 1
           fi

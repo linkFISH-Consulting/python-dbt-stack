@@ -4,14 +4,17 @@ StepResults are the objects we pass between hamiltons DAG nodes (functions)
 We also have some helpers to log them.
 """
 
+import os
 import inspect
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
 from rich.console import Console
 from rich.table import Table, box
+from rich.terminal_theme import MONOKAI
 
 
 @dataclass
@@ -48,7 +51,8 @@ def log_step_nodes_table(
     show_dependencies: bool = True,
     show_docstrings: bool = True,
     log: logging.Logger | None = None,
-    print_to_stdout: bool = True,
+    print_to_stdout: bool = False,
+    return_format: Literal["plain", "colored", "html"] = "plain",
 ):
     """
     Print, log, and return a table of step nodes (the functions in hamiltons DAG)
@@ -62,6 +66,7 @@ def log_step_nodes_table(
         show_docstrings: If True, shows description column (default: True)
         log: log into the provided logger, passes `extra={"log_to_cli": False}`
         print_to_stdout: Whether to show the table in stdout.
+        return_format: plain (no ansi), colored (with escape seqs) or html for emails.
 
     Note:
         We chose to handle printing/logging separately here, because the log handler
@@ -71,16 +76,20 @@ def log_step_nodes_table(
         print("No steps configured")
         return "No steps configured"
 
-    console = Console()
+    console = Console(
+        width=90,
+        record=True,
+        file=open(os.devnull, "wt"),
+    )
 
     # https://rich.readthedocs.io/en/stable/appendix/box.html#appendix-box
     table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD)
 
-    table.add_column("Step", style="cyan")
+    table.add_column("Step", style="cyan", overflow="fold")
     if show_dependencies:
-        table.add_column("Depends on", style="magenta")
+        table.add_column("Depends on", style="magenta", overflow="fold")
     if show_docstrings:
-        table.add_column("Description", style="green")
+        table.add_column("Description", style="green", overflow="fold")
 
     for step_name, step_func in steps.items():
         row = [step_name]
@@ -96,15 +105,20 @@ def log_step_nodes_table(
 
         table.add_row(*row, end_section=True)
 
-    with console.capture() as capture:
-        console.print(table)
-    text = capture.get()
+    console.print(table)
+    text = console.export_text(clear=False, styles=True)
 
     if print_to_stdout:
         print(text)
 
     if log is not None:
         log.info(f"\n{text}", extra={"log_to_cli": False})
+
+    if return_format == "html":
+        text = console.export_html(theme=MONOKAI)
+
+    if return_format in ["plain", "html"]:
+        text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
 
     return text
 
@@ -113,7 +127,8 @@ def log_step_results_table(
     steps: list[StepResult],
     title: str | None = None,
     log: logging.Logger | None = None,
-    print_to_stdout: bool = True,
+    print_to_stdout: bool = False,
+    return_format: Literal["plain", "colored", "html"] = "plain",
 ):
     """
     Print, log, and return a table of StepResults.
@@ -125,17 +140,22 @@ def log_step_results_table(
         title: Optional title for the table
         log: log into the provided logger, passes `extra={"log_to_cli": False}`
         print_to_stdout: Whether to show the table in stdout.
+        return_format: plain (no ansi), colored (with escape seqs) or html for emails.
 
     Note:
         We chose to handle printing/logging separately here, because the log handler
         does not support colored output (yet)
     """
-    console = Console()
+    console = Console(
+        width=90,
+        record=True,
+        file=open(os.devnull, "wt"),
+    )
     table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD)
 
-    table.add_column("Step", style="cyan")
-    table.add_column("Status")
-    table.add_column("Log")
+    table.add_column("Step", style="cyan", overflow="fold")
+    table.add_column("Status", overflow="fold")
+    table.add_column("Log", overflow="fold")
 
     for step in steps:
         status_style = (
@@ -154,14 +174,19 @@ def log_step_results_table(
             end_section=True,
         )
 
-    with console.capture() as capture:
-        console.print(table)
-    text = capture.get()
+    console.print(table)
+    text = console.export_text(clear=False, styles=True)
 
     if print_to_stdout:
         print(text)
 
     if log is not None:
         log.info(f"\n{text}", extra={"log_to_cli": False})
+
+    if return_format == "html":
+        text = console.export_html(theme=MONOKAI)
+
+    if return_format in ["plain", "html"]:
+        text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
 
     return text
