@@ -32,6 +32,7 @@ from dotenv import dotenv_values
 from hamilton import driver, telemetry
 from hamilton.base import DictResult
 
+from .duckdb import shrink_duckdb_command
 from .env_vars import env
 from .mail import mail_app
 from .steps import StepResult, log_step_nodes_table, log_step_results_table
@@ -214,6 +215,8 @@ def list_steps():
 
 
 cli_app.add_typer(mail_app, name="mail")
+cli_app.command(name="shrink-duckdb")(shrink_duckdb_command)
+
 
 # ---------------------------------------------------------------------------- #
 #                  Helper functions (not part of Hamilton DAG)                 #
