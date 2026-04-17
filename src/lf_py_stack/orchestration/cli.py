@@ -32,7 +32,8 @@ from dotenv import dotenv_values
 from hamilton import driver, telemetry
 from hamilton.base import DictResult
 
-from .env_vars import env
+from .config import config
+from .duckdb import shrink_duckdb_command
 from .mail import mail_app
 from .steps import StepResult, log_step_nodes_table, log_step_results_table
 
@@ -49,12 +50,26 @@ def run(
             "-s",
             "--select",
             help="Select steps to run via dbt-style syntax "
-            "(step1, step1+, +step1, step2...step4)",
+            "(step1, step1+, +step1, step2...step4). "
+            "To run all steps: -s all",
+        ),
+    ] = [],
+    # We want a way to pass things into individual steps from the cli
+    step_args: Annotated[
+        list[str],
+        typer.Option(
+            "-a",
+            "--step-arg",
+            help="Select a step and pass arguments (or data) into it. Usage: "
+            "-a 'dbt_run: --select model_to_run' -a 'my_step: my_literal'",
         ),
     ] = [],
     skip: Annotated[
         list[str],
-        typer.Option("--skip", help="Skip a step. Can be passed multiple times"),
+        typer.Option(
+            "--skip",
+            help="Skip a step. Combine with: -s all",
+        ),
     ] = [],
     env_file: Annotated[
         Path | None,
@@ -119,9 +134,9 @@ def run(
 
     # For logging, we have standardized helpers to set and get
     if log_level is not None:
-        env.logging.log_level = log_level
+        config.env.logging.log_level = log_level
     if log_file is not None:
-        env.logging.log_file = log_file
+        config.env.logging.log_file = log_file
 
     # as of now, we always invoke the app from a main module.
     # if this changes, we have to pass it via the app or an option
@@ -129,22 +144,29 @@ def run(
     steps = _module_steps(module="__main__", driver=driver)
     step_names = [str(s) for s in steps.keys()]
 
-    if select:
-        _steps_to_run = set()
-        for pattern in select or [""]:
-            matched = _parse_select_pattern(pattern.strip(), step_names)
-            _steps_to_run.update(matched)
-        steps_to_run = [
-            s for s in step_names if s in _steps_to_run
-        ]  # lets keep this ordered
-    else:
-        steps_to_run = step_names
+    _steps_to_run = set()
+    for pattern in select or []:
+        matched = _parse_select_pattern(pattern.strip(), step_names)
+        _steps_to_run.update(matched)
+    steps_to_run = [
+        s for s in step_names if s in _steps_to_run
+    ]  # lets keep this ordered
+
+    # Parse Arguments that should be available in individual steps.
+    # Save into config so steps can retreive them
+    # and automatically enable them as if they were specified with --select
+    config.step_args = _parse_step_arguments(
+        step_args=step_args, valid_step_names=step_names
+    )
+    for s in config.step_args.keys():
+        if s not in steps_to_run:
+            steps_to_run.append(s)
 
     # Apply skip
     steps_to_run = [s for s in steps_to_run if s not in skip]
 
     if not steps_to_run:
-        print("Nothing to run.")
+        print("Nothing to run. Consider using `-s all`")
         raise typer.Exit()
 
     print("Running the following steps:")
@@ -153,7 +175,6 @@ def run(
         show_dependencies=False,
         show_docstrings=True,
         print_to_stdout=True,
-
     )
 
     # overrides allow us to avoid invoking steps from the DAG
@@ -187,10 +208,17 @@ def list_steps():
     driver = _get_driver("__main__")
     steps = _module_steps("__main__", driver)
 
-    log_step_nodes_table(steps, show_dependencies=True, show_docstrings=True)
+    log_step_nodes_table(
+        steps,
+        show_dependencies=True,
+        show_docstrings=True,
+        print_to_stdout=True,
+    )
 
 
 cli_app.add_typer(mail_app, name="mail")
+cli_app.command(name="shrink-duckdb")(shrink_duckdb_command)
+
 
 # ---------------------------------------------------------------------------- #
 #                  Helper functions (not part of Hamilton DAG)                 #
@@ -219,6 +247,11 @@ def _module_steps(
         if name in driver.graph.nodes and not name.startswith("_")
     ]
 
+    # We do not allow a step name "all" because it is reserved as a cli argument
+    for s in functions:
+        if s[0] == "all":
+            raise ValueError("Invalid Name for step: 'all' is reserved.")
+
     # Sort by line number and return names and functions
     sorted_functions = sorted(functions, key=lambda x: x[2])
     # step_names = [name for name, _, _ in sorted_functions]
@@ -230,6 +263,10 @@ def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
     """Transform selection patterns into a list of steps to run."""
     if not pattern:
         return set()
+
+    # all → all steps
+    if pattern == "all":
+        return set(steps)
 
     # Step range: step2...step4
     if "..." in pattern:
@@ -275,3 +312,38 @@ def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
     else:
         typer.echo(f"Error: step '{pattern}' not found in pipeline.", err=True)
         raise typer.Exit(1)
+
+
+def _parse_step_arguments(
+    step_args: list[str],
+    valid_step_names: list[str] | None = None,
+):
+    """
+    Transform a list of step_arguments into a mapping from step_name to arg.
+
+    Expects each provided string to have the form `step_name:value`
+    where `step_name` becomes the mapping key.
+
+    Optionally, we check that the provided step_names are valid, and raise otherwise.
+    """
+
+    res: dict[str, str] = {}
+
+    for step_arg in step_args:
+        key, sep, value = step_arg.partition(":")
+        key = key.strip()
+        # keep payload as provided, except trimming one leading space after ':'
+        value = value.lstrip() if sep else ""
+        res[key] = value
+
+    if valid_step_names is not None:
+        invalid_steps = [s for s in res.keys() if str(s) not in valid_step_names]
+    else:
+        invalid_steps = []
+
+    if len(invalid_steps) != 0:
+        raise ValueError(
+            f"Steps {invalid_steps} were not recognized. Available: {valid_step_names}"
+        )
+
+    return res

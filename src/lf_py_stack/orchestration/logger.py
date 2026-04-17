@@ -12,6 +12,8 @@ import logging
 import re
 from pathlib import Path
 
+from lf_py_stack.orchestration.utility import get_caller_name
+
 from .env_vars import env
 
 
@@ -52,15 +54,8 @@ def get_logger(step_name: str | None = None) -> LfPyLogger:
         log.handlers.clear()
 
     # Create formatter with step name if provided
-    if step_name is None:  # Only set if name wasn't provided
-        frame = inspect.currentframe()
-        try:
-            # Go up 1 frame:
-            step_name = frame.f_back.f_code.co_name  # type: ignore
-        except Exception:
-            step_name = "no_step"
-        finally:
-            del frame  # Avoid reference cycles
+    if step_name is None:
+        step_name = get_caller_name() or "no_step"
 
     # File handler
     # Create a formatter that strips ANSI codes

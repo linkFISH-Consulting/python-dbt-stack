@@ -4,9 +4,9 @@ StepResults are the objects we pass between hamiltons DAG nodes (functions)
 We also have some helpers to log them.
 """
 
-import os
 import inspect
 import logging
+import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -15,6 +15,8 @@ from typing import Literal
 from rich.console import Console
 from rich.table import Table, box
 from rich.terminal_theme import MONOKAI
+
+from .utility import get_caller_name
 
 
 @dataclass
@@ -36,13 +38,9 @@ class StepResult:
 
     def __post_init__(self):
         """Set the name automatically when instance is created"""
-        if not self.name:  # Only set if name wasn't provided
-            frame = inspect.currentframe()
-            try:
-                # Go up 2 frames: 1 for __post_init__, 1 for dataclass __init__
-                self.name = frame.f_back.f_back.f_code.co_name  # type: ignore
-            finally:
-                del frame  # Avoid reference cycles
+        if not self.name:
+            # Go up 2 frames: 1 for __post_init__, 1 for dataclass __init__
+            self.name = get_caller_name(num_back=2) or "no_step"
 
 
 def log_step_nodes_table(

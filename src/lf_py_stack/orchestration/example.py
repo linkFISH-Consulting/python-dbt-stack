@@ -7,6 +7,7 @@ import os
 from lf_py_stack.orchestration import (
     StepResult,
     cli_app,
+    config,
     get_logger,
     run_cli_command,
     send_mail,
@@ -20,9 +21,10 @@ def step_a() -> StepResult:
 
 
 def step_b(step_a: StepResult) -> StepResult:
-    """Step that uses env vars and previous results"""
+    """Step that uses env vars, cli arguments and previous results"""
     print("Hello from step_b")
     print(f"Current shell: {os.environ.get('SHELL')}")
+    print(f"Cli Arguments to this step: {config.get_step_args()}")
     print(f"Previous step result: {step_a.message}")
     return StepResult("PASS", "Also all good")
 

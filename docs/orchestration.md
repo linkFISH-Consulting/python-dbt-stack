@@ -7,7 +7,7 @@ To get started, create a python file as shown below, and then run it with python
 
 ```bash
 python orchestration.py --help
-python orchestration.py run
+python orchestration.py run -s all
 ```
 
 ```python
@@ -95,7 +95,7 @@ Will produce the following output
 (if env vars for email are set correctly, see `./orchestration.py mail --help`):
 
 ```raw
-> python ./orchestration.py run
+> python ./orchestration.py run -s all
 Running the following steps:
          ╷
   Step   │ Description
