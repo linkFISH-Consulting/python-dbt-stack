@@ -26,9 +26,9 @@ cffi==2.0.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
 cfgv==3.5.0
     # via pre-commit
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via requests
-click==8.3.1
+click==8.3.2
     # via
     #   dbt-core
     #   dbt-semantic-interfaces
@@ -38,7 +38,7 @@ colorama==0.4.6
     #   click
     #   dbt-common
     #   pytest
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   azure-identity
     #   msal
@@ -87,17 +87,17 @@ deepdiff==8.6.2
     # via dbt-common
 distlib==0.4.0
     # via virtualenv
-duckdb==1.5.1
+duckdb==1.5.2
     # via
     #   dbt-duckdb
     #   lf-py-stack
 et-xmlfile==2.0.0
     # via openpyxl
-filelock==3.25.2
+filelock==3.28.0
     # via
     #   python-discovery
     #   virtualenv
-greenlet==3.3.2 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
+greenlet==3.4.0 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
     # via sqlalchemy
 identify==2.6.18
     # via pre-commit
@@ -124,7 +124,7 @@ jsonschema-specifications==2025.9.1
     # via jsonschema
 leather==0.4.1
     # via agate
-librt==0.8.1 ; platform_python_implementation != 'PyPy'
+librt==0.9.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 markdown-it-py==4.0.0
     # via rich
@@ -139,7 +139,7 @@ mdurl==0.1.2
     # via markdown-it-py
 more-itertools==10.8.0
     # via dbt-semantic-interfaces
-msal==1.35.1
+msal==1.36.0
     # via
     #   azure-identity
     #   msal-extensions
@@ -166,7 +166,7 @@ openpyxl==3.1.5
     # via lf-py-stack
 orderly-set==5.5.0
     # via deepdiff
-packaging==26.0
+packaging==26.1
     # via
     #   dbt-core
     #   pytest
@@ -181,7 +181,7 @@ pathspec==0.12.1
     #   dbt-common
     #   dbt-core
     #   mypy
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   python-discovery
     #   virtualenv
@@ -202,9 +202,9 @@ psycopg2-binary==2.9.11
     # via dbt-postgres
 pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
     # via cffi
-pydantic==2.12.5
+pydantic==2.13.2
     # via dbt-semantic-interfaces
-pydantic-core==2.41.5
+pydantic-core==2.46.2
     # via pydantic
 pygments==2.20.0
     # via
@@ -214,13 +214,13 @@ pyjwt==2.12.1
     # via msal
 pyodbc==5.1.0
     # via dbt-fabric
-pytest==9.0.2
+pytest==9.0.3
 python-dateutil==2.9.0.post0
     # via
     #   dbt-common
     #   dbt-semantic-interfaces
     #   pandas
-python-discovery==1.2.1
+python-discovery==1.2.2
     # via virtualenv
 python-dotenv==1.2.2
     # via lf-py-stack
@@ -248,7 +248,7 @@ requests==2.33.1
     #   dbt-core
     #   msal
     #   snowplow-tracker
-rich==14.3.3
+rich==15.0.0
     # via typer
 rpds-py==0.30.0
     # via
@@ -256,7 +256,7 @@ rpds-py==0.30.0
     #   referencing
 ruamel-yaml==0.19.1
     # via lf-py-stack
-ruff==0.15.8
+ruff==0.15.11
 scipy==1.17.1
     # via lf-py-stack
 sf-hamilton==1.89.0
@@ -267,7 +267,7 @@ six==1.17.0
     # via python-dateutil
 snowplow-tracker==1.1.0
     # via dbt-core
-sqlalchemy==2.0.48
+sqlalchemy==2.0.49
     # via lf-py-stack
 sqlparse==0.5.5
     # via dbt-core
@@ -275,7 +275,7 @@ text-unidecode==1.3
     # via python-slugify
 typer==0.24.1
     # via lf-py-stack
-types-pyyaml==6.0.12.20250915
+types-pyyaml==6.0.12.20260408
 typing-extensions==4.15.0
     # via
     #   azure-core
@@ -298,13 +298,13 @@ typing-inspect==0.9.0
     # via sf-hamilton
 typing-inspection==0.4.2
     # via pydantic
-tzdata==2025.3 ; sys_platform == 'emscripten' or sys_platform == 'win32'
+tzdata==2026.1 ; sys_platform == 'emscripten' or sys_platform == 'win32'
     # via
     #   agate
     #   pandas
 urllib3==2.6.3
     # via requests
-virtualenv==21.2.0
+virtualenv==21.2.4
     # via pre-commit
-zipp==3.23.0
+zipp==3.23.1
     # via importlib-metadata
