@@ -1,5 +1,6 @@
 from .cli import cli_app
 from .components import get_dbt_versions, log_dbt_versions, run_cli_command, truncate
+from .config import config
 from .duckdb import shrink_duckdb
 from .logger import get_logger
 from .mail import mail_app, send_mail
@@ -18,4 +19,5 @@ __all__ = [
     "truncate",
     "mail_app",
     "cli_app",
+    "config",
 ]
