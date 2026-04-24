@@ -1,0 +1,68 @@
+name: Build Wheelhouse
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build-wheelhouse:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Install uv (fast + reproducible)
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.ps1 | powershell
+          echo "$HOME\.cargo\bin" >> $env:GITHUB_PATH
+
+      # Set up Python (only for building your project wheel)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Upgrade build tools
+        run: |
+          uv pip install --upgrade build wheel
+
+      # Download all dependency wheels
+      - name: Download dependency wheels
+        run: |
+          mkdir build\wheels
+          python -m pip download -r requirements.txt -d wheels --only-binary=:all:
+
+      # Build and copy our project as a wheel
+      - name: Build and copy project wheel
+        run: |
+          python -m build --wheel --outdir build\dist
+          copy build\dist\*.whl build\wheels\
+
+      # Prepare bundle structure
+      - name: Prepare bundle
+        run: |
+          mkdir bundle
+          xcopy build\wheels build\bundle\wheels /E /I /Y
+          copy requirements.txt build\bundle\
+
+      # Zip it
+      - name: Create zip archive
+        run: |
+          powershell Compress-Archive -Path build\bundle\* -DestinationPath wheelhouse.zip
+
+      # Upload as artifact (always useful)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheelhouse
+          path: wheelhouse.zip
+
+      # Attach to GitHub Release (only if triggered by release)
+      # - name: Upload to release
+      #   if: github.event_name == 'release'
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     files: wheelhouse.zip
