@@ -10,6 +10,11 @@ TLDR:
 - Features v0.1.0 (Minor Version)
 - Breaking Changes v1.0.0 (Major Version)
 
+## Upcoming
+
+### Added
+- Workflow to automatically generate a wheelhouse as part of each new release, so we can install all dependencies on windows servers without internet access. See `/docs/deploy_wheelhouse_offline.md`
+
 ## [0.3.0] - 2026-04-17
 
 ### Added
