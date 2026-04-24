@@ -1,10 +1,9 @@
 name: Auto Release
 
-# PS 2026-01-23 Disabled Auto-Release, until Docker step works. (Manual releases do
-# trigger the docker step)
-# on:
-#   push:
-#     branches: [ main ]
+on:
+  workflow_dispatch:
+  # PS 2026-01-23 Disabled Auto-Release, until Docker step works.
+  # (Manual releases do trigger the docker step)
 
 jobs:
   check-version-and-release:
@@ -13,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history to compare versions
+          fetch-depth: 0 # Fetch full history to compare versions
 
       - name: Get current version
         id: current_version
