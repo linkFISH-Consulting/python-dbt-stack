@@ -10,6 +10,11 @@ TLDR:
 - Features v0.1.0 (Minor Version)
 - Breaking Changes v1.0.0 (Major Version)
 
+## [0.4.0] - 2026-05-04
+
+### Added
+- Workflow to automatically generate a wheelhouse as part of each new release, so we can install all dependencies on windows servers without internet access. See `/docs/deploy_wheelhouse_offline.md`
+
 ## [0.3.0] - 2026-04-17
 
 ### Added
@@ -79,6 +84,8 @@ TLDR:
 -  Pinned duckdb to 1.3.2. to avoid this [issue](https://github.com/duckdb/duckdb/issues/19171)
 
 
+[0.4.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.1.4...v0.1.5

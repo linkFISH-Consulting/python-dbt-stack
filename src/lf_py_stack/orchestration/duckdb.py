@@ -45,6 +45,7 @@ def shrink_duckdb_command(
     """Shrink a DuckDB file by keeping only tables from specified schemas."""
     shrink_duckdb(input_file, output_file, schemas)
 
+
 # function that can be used in orchestration workflows
 def shrink_duckdb(
     input_file: Path,
@@ -129,12 +130,11 @@ def _copy_tables_to_new_db(
             )
 
         if not valid_schemas:
-            log.error(
+            raise ValueError(
                 f"No valid schemas found to copy! Candidates:"
-                f"{', '.join(available_schemas)}"
+                f"\n{', '.join(available_schemas)}"
+                "\nTry the --schema option with one of the available schemas!"
             )
-            log.info("Try the --schema option with one of the available schemas!")
-            raise typer.Exit(code=1)
 
         log.debug(f"Creating target database: {target_path}")
         with duckdb.connect(str(target_path)) as target_conn:
@@ -179,4 +179,3 @@ def _copy_tables_to_new_db(
         f"Copied {total_tables_copied} tables from "
         f"{len(valid_schemas)} schemas in {dt.total_seconds():.1f} seconds"
     )
-

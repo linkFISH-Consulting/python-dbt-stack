@@ -4,65 +4,79 @@ on:
   workflow_dispatch:
   release:
     types: [published]
+  # during debugging
+  # push:
+  #   branches:
+  #     - wheelhouse
 
 jobs:
   build-wheelhouse:
-    runs-on: windows-latest
+    name: wheelhouse-${{ matrix.python-version }}-${{ matrix.architecture }}
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.12"
+            architecture: "x64"
+            runs_on: "windows-latest"
+          # - python-version: "3.12"
+          #   architecture: "x86"
+          #   runs_on: "windows-latest"
+          # - python-version: "3.12"
+          #   architecture: "arm64"
+          #   runs_on: "windows-11-arm"
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # Install uv (fast + reproducible)
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.ps1 | powershell
-          echo "$HOME\.cargo\bin" >> $env:GITHUB_PATH
-
-      # Set up Python (only for building your project wheel)
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.7"
 
       - name: Upgrade build tools
-        run: |
-          uv pip install --upgrade build wheel
+        run: uv pip install --system --upgrade build wheel
 
-      # Download all dependency wheels
+      - name: Read package version from pyproject.toml
+        id: pkg
+        shell: pwsh
+        run: |
+          $version = python -c "import pathlib, tomllib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Download dependency wheels
         run: |
           mkdir build\wheels
-          python -m pip download -r requirements.txt -d wheels --only-binary=:all:
+          python -m pip download -r requirements.txt -d build\wheels --only-binary=:all:
 
-      # Build and copy our project as a wheel
-      - name: Build and copy project wheel
+      - name: Build and copy project wheel and requirements
         run: |
-          python -m build --wheel --outdir build\dist
-          copy build\dist\*.whl build\wheels\
+          python -m build --wheel --outdir build\wheels
+          copy requirements.txt build
 
-      # Prepare bundle structure
-      - name: Prepare bundle
-        run: |
-          mkdir bundle
-          xcopy build\wheels build\bundle\wheels /E /I /Y
-          copy requirements.txt build\bundle\
-
-      # Zip it
       - name: Create zip archive
+        shell: pwsh
         run: |
-          powershell Compress-Archive -Path build\bundle\* -DestinationPath wheelhouse.zip
+          $zipName = "wheelhouse-${{ steps.pkg.outputs.version }}-py${{ matrix.python-version }}-${{ matrix.architecture }}.zip"
+          Compress-Archive -Path build\* -DestinationPath $zipName
 
-      # Upload as artifact (always useful)
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: wheelhouse
-          path: wheelhouse.zip
+          name: wheelhouse-${{ steps.pkg.outputs.version }}-py${{ matrix.python-version }}-${{ matrix.architecture }}
+          path: wheelhouse-${{ steps.pkg.outputs.version }}-py${{ matrix.python-version }}-${{ matrix.architecture }}.zip
 
       # Attach to GitHub Release (only if triggered by release)
-      # - name: Upload to release
-      #   if: github.event_name == 'release'
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     files: wheelhouse.zip
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: wheelhouse-${{ steps.pkg.outputs.version }}-py${{ matrix.python-version }}-${{ matrix.architecture }}.zip
