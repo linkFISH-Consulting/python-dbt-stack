@@ -61,6 +61,7 @@ jobs:
         run: |
           python -m build --wheel --outdir build\wheels
           copy requirements.txt build
+          copy docs\deploy_wheelhouse_offline.md build\README.md
 
       - name: Create zip archive
         shell: pwsh

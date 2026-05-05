@@ -8,9 +8,13 @@ UV makes this possible because it allows us to manage Python packages via a cent
 ## Installation
 
 The steps below illustrate how to install the package directly on your local machine, using uv or pip.
-(Other install methods include [docker](/docs/deploy_with_docker.md) and [conda](/docs/deploy_with_conda.md))
 
-**using uv** and a dedicated venv (recommended)
+For other installation methods see the docs for:
+- [offline install](/docs/deploy_wheelhouse_offline.md) (using the wheelhouse for windows)
+- [docker](/docs/deploy_with_docker.md)
+- [conda](/docs/deploy_with_conda.md)
+
+### Install using uv and a dedicated venv
 
 - [Get UV](https://docs.astral.sh/uv/getting-started/installation/)
 

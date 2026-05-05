@@ -10,6 +10,12 @@ TLDR:
 - Features v0.1.0 (Minor Version)
 - Breaking Changes v1.0.0 (Major Version)
 
+## Upcoming
+
+### Added
+
+- Improved Readme and docs, now including the deployment instrucitons in the wheelhouse.
+
 ## [0.4.0] - 2026-05-04
 
 ### Added
