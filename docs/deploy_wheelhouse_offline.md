@@ -15,7 +15,7 @@ To deploy:
   - install from the wheelhouse without online lookup
 
 ```pwsh
-uv venv --python "D:\linkFISH\apps\python.exe"
+uv venv --python "D:\linkFISH\apps\python\python.exe"
 .venv\Scripts\activate
 
 uv pip sync "D:\linkFISH\apps\lf_py_stack\requirements.txt" `
@@ -40,9 +40,12 @@ A common usecase is that we just want a working dbt installation that uses a sta
 $env:UV_TOOL_DIR="D:\linkFISH\user_config\uv\tools"
 $env:UV_TOOL_BIN_DIR="D:\linkFISH\user_config\uv\bin"
 uv tool install `
-    --python "D:\linkFISH\apps\python.exe" `
+    --python "D:\linkFISH\apps\python\python.exe" `
     --find-links "D:\linkFISH\apps\lf_py_stack\wheels\" `
     --no-index `
     --with lf_py_stack `
     dbt-core
 ```
+
+> [!NOTE]
+> Der MDS Installer platziert die .exe nicht in `\user_config` sondern in `\apps\dbt`

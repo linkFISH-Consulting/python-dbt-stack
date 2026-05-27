@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table, box
 from rich.terminal_theme import MONOKAI
 
@@ -99,7 +100,7 @@ def log_step_nodes_table(
 
         if show_docstrings:
             description = inspect.getdoc(step_func) or "No documentation"
-            row.append(description)
+            row.append(escape(description))
 
         table.add_row(*row, end_section=True)
 
@@ -168,7 +169,7 @@ def log_step_results_table(
         table.add_row(
             step.name,
             f"[{status_style}]{step.status}[/]",
-            step.message,
+            escape(step.message),
             end_section=True,
         )
 

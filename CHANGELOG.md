@@ -16,6 +16,9 @@ TLDR:
 
 - Improved Readme and docs, now including the deployment instrucitons in the wheelhouse.
 
+### Fixed
+- Logging step results with messages that contain `[tags]` no longer crashes due to markup errors.
+
 ## [0.4.0] - 2026-05-04
 
 ### Added

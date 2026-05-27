@@ -30,6 +30,9 @@ source ./.venv/bin/activate
 
 # install latest
 uv pip install git+https://github.com/linkFISH-Consulting/python-dbt-stack
+
+# check what was installed
+uv pip tree --depth 1
 ```
 
 This will get you the latest version of our package, and latest versions of its dependencies.
