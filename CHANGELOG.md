@@ -15,9 +15,14 @@ TLDR:
 ### Added
 
 - Improved Readme and docs, now including the deployment instrucitons in the wheelhouse.
+- CLI: Added `-q` `--quiet` option to suppress step summary tables before and after run.
 
 ### Fixed
-- Logging step results with messages that contain `[tags]` no longer crashes due to markup errors.
+- CLI: Logging step results with messages that contain `[tags]` no longer crashes due to markup errors.
+
+### Changed
+- Breaking: CLI: removed `-a` Option, now combined with of `-s` `--select`
+- Breaking: Renamed `"SKIP"` step status to `"OMIT"`, so we can use `"SKIP"` to indicate a step that was skipped due to a previous step failing (consistent with dbt's behavior)
 
 ## [0.4.0] - 2026-05-04
 

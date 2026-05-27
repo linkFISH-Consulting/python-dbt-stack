@@ -53,13 +53,12 @@ def run(
             "To pass arguments to steps: -s 'dbt_run: --select model'",
         ),
     ] = [],
-    skip: Annotated[
+    omit: Annotated[
         list[str],
         typer.Option(
             "--omit",
-            "--skip",
             "-o",
-            help="Skip a step. Combine with: -s all",
+            help="Omit a step (dont run it). Combine with: -s all",
         ),
     ] = [],
     quiet: Annotated[
@@ -165,8 +164,8 @@ def run(
             steps_to_run.append(s)
 
     # Apply skip
-    steps_to_run = [s for s in steps_to_run if s not in skip]
-    config.step_args = {k: v for k, v in config.step_args.items() if k not in skip}
+    steps_to_run = [s for s in steps_to_run if s not in omit]
+    config.step_args = {k: v for k, v in config.step_args.items() if k not in omit}
 
     if not steps_to_run:
         print("Nothing to run. Consider using `-s all`")
@@ -183,7 +182,7 @@ def run(
 
     # overrides allow us to avoid invoking steps from the DAG
     overrides = {
-        s: StepResult("SKIP", "Skipped via CLI", name=s)
+        s: StepResult("OMIT", "Did not run (as requested via CLI)", name=s)
         for s in step_names
         if s not in steps_to_run
     }
