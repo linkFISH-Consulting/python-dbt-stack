@@ -62,6 +62,14 @@ def run(
             help="Skip a step. Combine with: -s all",
         ),
     ] = [],
+    quiet: Annotated[
+        bool,
+        typer.Option(
+            "-q",
+            "--quiet",
+            help="Suppress step summary tables before and after run.",
+        ),
+    ] = False,
     env_file: Annotated[
         Path | None,
         typer.Option(
@@ -164,13 +172,14 @@ def run(
         print("Nothing to run. Consider using `-s all`")
         raise typer.Exit()
 
-    print("Running the following steps:")
-    log_step_nodes_table(
-        steps={sn: steps[sn] for sn in steps_to_run},
-        show_dependencies=False,
-        show_docstrings=True,
-        print_to_stdout=True,
-    )
+    if not quiet:
+        print("Running the following steps:")
+        log_step_nodes_table(
+            steps={sn: steps[sn] for sn in steps_to_run},
+            show_dependencies=False,
+            show_docstrings=True,
+            print_to_stdout=True,
+        )
 
     # overrides allow us to avoid invoking steps from the DAG
     overrides = {
@@ -190,11 +199,12 @@ def run(
         overrides=overrides,
     )
 
-    log_step_results_table(
-        steps=list(step_results.values()) + list(overrides.values()),
-        title="Orchestration run complete",
-        print_to_stdout=True,
-    )
+    if not quiet:
+        log_step_results_table(
+            steps=list(step_results.values()) + list(overrides.values()),
+            title="Orchestration run complete",
+            print_to_stdout=True,
+        )
 
 
 @cli_app.command(name="list")
