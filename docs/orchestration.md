@@ -3,122 +3,47 @@
 
 We now include some lightweight tools to orchestrate simple pipelines via hamilton.
 
-To get started, create a python file as shown below, and then run it with python, providing paramters as needed.
+To get started, take a look at the [example](/src/lf_py_stack/orchestration/example.py), and then run it with python, providing paramters as needed.
 
+Typical commands are:
 ```bash
-python orchestration.py --help
-python orchestration.py run -s all
+python ./src/lf_py_stack/orchestration/example.py --help
+python ./src/lf_py_stack/orchestration/example.py list
+python ./src/lf_py_stack/orchestration/example.py run -s all
 ```
 
-```python
-# orchestration.py
-
-import os
-
-from lf_py_stack.orchestration import (
-    StepResult,
-    cli_app,
-    get_logger,
-    run_cli_command,
-    send_mail,
-)
-
-
-def step_a() -> StepResult:
-    """A dummy step"""
-    print("Hello from step_a")
-    return StepResult("PASS", "All good")
-
-
-def step_b(step_a: StepResult) -> StepResult:
-    """Step that uses env vars and previous results"""
-    print("Hello from step_b")
-    print(f"Current shell: {os.environ.get('SHELL')}")
-    print(f"Previous step result: {step_a.message}")
-    return StepResult("PASS", "Also all good")
-
-
-def step_c(step_b: StepResult) -> StepResult:
-    """
-    To denote the sequence, make steps depende on previous ones via arguments.
-    You do not _have to use_ `step_b` in here.
-    """
-    print("Hello from step_c")
-    try:
-        _will_fail = 1 / 0
-        return StepResult("PASS", "All good")
-    except ZeroDivisionError:
-        return StepResult("FAIL", "Something went wrong")
-
-
-def step_d(step_c: StepResult) -> StepResult:
-    """
-    We can also log everything we do (to send via email) and run cli commands
-    """
-    log = get_logger()
-    log.info("Hello from step_d")
-
-    # by default, the run_cli_command uses your current environment variables,
-    # which includes the .env file our main entrypoint has loaded (cli `run`)
-    code, msg = run_cli_command("ls -l", log=log, print_to_stdout=False)
-    return StepResult("PASS" if code == 0 else "FAIL", msg)
-
-
-def step_e(step_d: StepResult) -> StepResult:
-    """Email example
-    The send_mail function uses environment variables, and can send our log file.
-    """
-    log = get_logger()
-    log.info("Hello from step_e")
-    try:
-        send_mail(
-            to="admin@example.com",
-            from_name="orchestration@example.com",
-            subject="Orchestration demo",
-            body="Orchestration demo",
-            attachments=log.log_file,
-            # Note: the log file will only contain info from step_d and e,
-            # because before, we used `print()` instead of `log.info()`
-        )
-        return StepResult("PASS", "Email sent successfully")
-    except Exception as e:
-        return StepResult("FAIL", str(e))
-
-
-if __name__ == "__main__":
-    # the app handles the cli interface and log file setup for us
-    cli_app()
-
+And
+```bash
+python ./src/lf_py_stack/orchestration/example.py run -s all -s step_b:'hello world' -o step_f
 ```
 
-Will produce the following output
-(if env vars for email are set correctly, see `./orchestration.py mail --help`):
+Will produce the following output:
 
 ```raw
-> python ./orchestration.py run -s all
 Running the following steps:
          ╷
   Step   │ Description
- ════════╪═══════════════════════════════════════════════════════════════════════════════
+ ════════╪════════════════════════════════════════════════════════════════════════════
   step_a │ A dummy step
- ────────┼───────────────────────────────────────────────────────────────────────────────
-  step_b │ Step that uses env vars and previous results
- ────────┼───────────────────────────────────────────────────────────────────────────────
+ ────────┼────────────────────────────────────────────────────────────────────────────
+  step_b │ Step that uses env vars, cli arguments and previous results
+ ────────┼────────────────────────────────────────────────────────────────────────────
   step_c │ To denote the sequence, make steps depende on previous ones via arguments.
          │ You do not _have to use_ `step_b` in here.
- ────────┼───────────────────────────────────────────────────────────────────────────────
-  step_d │ We can also log everything we do (to send via email) and run cli commands
- ────────┼───────────────────────────────────────────────────────────────────────────────
-  step_e │ Email example
-         │ The send_mail function uses environment variables, and can send our log file.
+ ────────┼────────────────────────────────────────────────────────────────────────────
+  step_d │ Check status of previous steps to propagate errors and skip steps
+ ────────┼────────────────────────────────────────────────────────────────────────────
+  step_e │ We can also log everything we do (to send via email) and run cli commands
          ╵
 
 Hello from step_a
 Hello from step_b
 Current shell: /bin/zsh
+Cli Arguments to this step: hello world
 Previous step result: All good
 Hello from step_c
 Hello from step_d
+Hello from step_e
                               Orchestration run complete
          ╷        ╷
   Step   │ Status │ Log
@@ -129,19 +54,23 @@ Hello from step_d
  ────────┼────────┼───────────────────────────────────────────────────────────────────
   step_c │ FAIL   │ Something went wrong
  ────────┼────────┼───────────────────────────────────────────────────────────────────
-  step_d │ PASS   │ total 408
-         │        │ -rw-r--r--  1 paul  staff    1527 Mar 19 14:07 CHANGELOG.md
-         │        │ -rw-r--r--@ 1 paul  staff     677 Mar 19 11:29 docker-compose.yml
-         │        │ -rw-r--r--@ 1 paul  staff    3303 Mar 19 11:51 Dockerfile
+  step_d │ SKIP   │ Skipped due to failure in step_c
+ ────────┼────────┼───────────────────────────────────────────────────────────────────
+  step_e │ PASS   │ total 392
+         │        │ -rw-r--r--@ 1 paul  staff    4140 May 27 17:22 CHANGELOG.md
+         │        │ drwxr-xr-x@ 3 paul  staff      96 Apr 22 16:41 dist
+         │        │ -rw-r--r--  1 paul  staff     677 Apr  3 20:43 docker-compose.yml
+         │        │ -rw-r--r--  1 paul  staff    3303 Apr  3 20:43 Dockerfile
+         │        │ drwxr-xr-x  7 paul  staff     224 May  5 09:41 docs
          │        │ -rwxr-xr-x  1 paul  staff    1482 Feb  4 16:54 entrypoint.sh
          │        │ -rw-r--r--  1 paul  staff    1076 Dec  8 14:01 LICENSE
-         │        │ -rw-r--r--@ 1 paul  staff    1873 Mar 19 13:13 pyproject.toml
-         │        │ -rw-r--r--@ 1 paul  staff   10542 Mar 19 14:17 README.md
-         │        │ -rw-r--r--  1 paul  staff    4941 Mar 19 14:18 requirements.txt
+         │        │ -rw-r--r--  1 paul  staff    1661 May  5 09:41 pyproject.toml
+         │        │ -rw-r--r--@ 1 paul  staff    2685 May 27 14:07 README.md
+         │        │ -rw-r--r--  1 paul  staff    6238 May  4 10:19 requirements.txt
          │        │ drwxr-xr-x@ 3 paul  staff      96 Mar 19 11:19 src
-         │        │ -rw-r--r--  1 paul  staff  157377 Mar 19 14:07 uv.lock
+         │        │ -rw-r--r--  1 paul  staff  157699 May  5 09:41 uv.lock
          │        │
  ────────┼────────┼───────────────────────────────────────────────────────────────────
-  step_e │ PASS   │ Email sent successfully
-
+  step_f │ OMIT   │ Did not run (as requested via CLI)
+         ╵
 ```

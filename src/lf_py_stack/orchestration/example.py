@@ -41,13 +41,24 @@ def step_c(step_b: StepResult) -> StepResult:
     except ZeroDivisionError:
         return StepResult("FAIL", "Something went wrong")
 
-
 def step_d(step_c: StepResult) -> StepResult:
+    """Check status of previous steps to propagate errors and skip steps"""
+    log = get_logger()
+    log.info("Hello from step_d")
+
+    if step_c.status in ["FAIL", "SKIP"]:
+        return StepResult("SKIP", "Skipped due to failure in step_c")
+
+    return StepResult("PASS", "All good")
+
+
+def step_e(step_d: StepResult) -> StepResult:
     """
     We can also log everything we do (to send via email) and run cli commands
     """
     log = get_logger()
-    log.info("Hello from step_d")
+    log.info("Hello from step_e")
+
 
     # by default, the run_cli_command uses your current environment variables,
     # which includes the .env file our main entrypoint has loaded (cli `run`)
@@ -55,12 +66,12 @@ def step_d(step_c: StepResult) -> StepResult:
     return StepResult("PASS" if code == 0 else "FAIL", msg)
 
 
-def step_e(step_d: StepResult) -> StepResult:
+def step_f(step_d: StepResult) -> StepResult:
     """Email example
     The send_mail function uses environment variables, and can send our log file.
     """
     log = get_logger()
-    log.info("Hello from step_e")
+    log.info("Hello from step_f")
     try:
         send_mail(
             to="admin@example.com",

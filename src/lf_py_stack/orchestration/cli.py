@@ -29,15 +29,13 @@ from typing import Annotated
 
 import typer
 from dotenv import dotenv_values
-from hamilton import driver, telemetry
+from hamilton import driver
 from hamilton.base import DictResult
 
 from .config import config
 from .duckdb import shrink_duckdb_command
 from .mail import mail_app
 from .steps import StepResult, log_step_nodes_table, log_step_results_table
-
-telemetry.disable_telemetry()
 
 cli_app = typer.Typer()
 
@@ -49,28 +47,28 @@ def run(
         typer.Option(
             "-s",
             "--select",
-            help="Select steps to run via dbt-style syntax "
-            "(step1, step1+, +step1, step2...step4). "
-            "To run all steps: -s all",
+            help="Select steps to run. Supported syntax:\n\n"
+            "DBT-like: -s step1, -s step1+, -s +step1, or -s step2...step4 "
+            "(to select a range of steps)\n\n"
+            "To pass arguments to steps: -s 'dbt_run: --select model'",
         ),
     ] = [],
-    # We want a way to pass things into individual steps from the cli
-    step_args: Annotated[
+    omit: Annotated[
         list[str],
         typer.Option(
-            "-a",
-            "--step-arg",
-            help="Select a step and pass arguments (or data) into it. Usage: "
-            "-a 'dbt_run: --select model_to_run' -a 'my_step: my_literal'",
+            "--omit",
+            "-o",
+            help="Omit a step (dont run it). Combine with: -s all",
         ),
     ] = [],
-    skip: Annotated[
-        list[str],
+    quiet: Annotated[
+        bool,
         typer.Option(
-            "--skip",
-            help="Skip a step. Combine with: -s all",
+            "-q",
+            "--quiet",
+            help="Suppress step summary tables before and after run.",
         ),
-    ] = [],
+    ] = False,
     env_file: Annotated[
         Path | None,
         typer.Option(
@@ -145,9 +143,12 @@ def run(
     step_names = [str(s) for s in steps.keys()]
 
     _steps_to_run = set()
+    parsed_step_args: list[str] = []
     for pattern in select or []:
-        matched = _parse_select_pattern(pattern.strip(), step_names)
+        matched, step_arg = _parse_select_pattern(pattern.strip(), step_names)
         _steps_to_run.update(matched)
+        if step_arg is not None:
+            parsed_step_args.append(step_arg)
     steps_to_run = [
         s for s in step_names if s in _steps_to_run
     ]  # lets keep this ordered
@@ -156,30 +157,32 @@ def run(
     # Save into config so steps can retreive them
     # and automatically enable them as if they were specified with --select
     config.step_args = _parse_step_arguments(
-        step_args=step_args, valid_step_names=step_names
+        step_args=parsed_step_args, valid_step_names=step_names
     )
     for s in config.step_args.keys():
         if s not in steps_to_run:
             steps_to_run.append(s)
 
     # Apply skip
-    steps_to_run = [s for s in steps_to_run if s not in skip]
+    steps_to_run = [s for s in steps_to_run if s not in omit]
+    config.step_args = {k: v for k, v in config.step_args.items() if k not in omit}
 
     if not steps_to_run:
         print("Nothing to run. Consider using `-s all`")
         raise typer.Exit()
 
-    print("Running the following steps:")
-    log_step_nodes_table(
-        steps={sn: steps[sn] for sn in steps_to_run},
-        show_dependencies=False,
-        show_docstrings=True,
-        print_to_stdout=True,
-    )
+    if not quiet:
+        print("Running the following steps:")
+        log_step_nodes_table(
+            steps={sn: steps[sn] for sn in steps_to_run},
+            show_dependencies=False,
+            show_docstrings=True,
+            print_to_stdout=True,
+        )
 
     # overrides allow us to avoid invoking steps from the DAG
     overrides = {
-        s: StepResult("SKIP", "Skipped via CLI", name=s)
+        s: StepResult("OMIT", "Did not run (as requested via CLI)", name=s)
         for s in step_names
         if s not in steps_to_run
     }
@@ -195,11 +198,12 @@ def run(
         overrides=overrides,
     )
 
-    log_step_results_table(
-        steps=list(step_results.values()) + list(overrides.values()),
-        title="Orchestration run complete",
-        print_to_stdout=True,
-    )
+    if not quiet:
+        log_step_results_table(
+            steps=list(step_results.values()) + list(overrides.values()),
+            title="Orchestration run complete",
+            print_to_stdout=True,
+        )
 
 
 @cli_app.command(name="list")
@@ -259,14 +263,32 @@ def _module_steps(
     return {s[0]: s[1] for s in sorted_functions}
 
 
-def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
-    """Transform selection patterns into a list of steps to run."""
+def _parse_select_pattern(
+    pattern: str, steps: list[str]
+) -> tuple[set[str], str | None]:
+    """Transform one select token into steps to run and an optional step_arg token."""
     if not pattern:
-        return set()
+        return set(), None
+
+    key, sep, _ = pattern.partition(":")
+    key = key.strip()
+
+    # step:arg → step arg + explicit single-step selection
+    if sep and key in steps:
+        return {key}, pattern
+
+    # ':' is only valid for explicit step names, not selectors like all, +step, step+
+    if sep and key not in steps:
+        typer.echo(
+            f"Error: Invalid step arg syntax '{pattern}'. "
+            "Only explicit step names support ':', e.g. step_name:arg",
+            err=True,
+        )
+        raise typer.Exit(1)
 
     # all → all steps
     if pattern == "all":
-        return set(steps)
+        return set(steps), None
 
     # Step range: step2...step4
     if "..." in pattern:
@@ -286,7 +308,7 @@ def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
                 err=True,
             )
             raise typer.Exit(1)
-        return set(steps[i : j + 1])
+        return set(steps[i : j + 1]), None
 
     # +step1 → from start to step1
     if pattern.startswith("+") and not pattern.endswith("+"):
@@ -295,7 +317,7 @@ def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
             typer.echo(f"Error: step '{target}' not found in pipeline.", err=True)
             raise typer.Exit(1)
         idx = steps.index(target)
-        return set(steps[: idx + 1])
+        return set(steps[: idx + 1]), None
 
     # step1+ → from step1 to end
     if pattern.endswith("+") and not pattern.startswith("+"):
@@ -304,11 +326,11 @@ def _parse_select_pattern(pattern: str, steps: list[str]) -> set[str]:
             typer.echo(f"Error: step '{target}' not found in pipeline.", err=True)
             raise typer.Exit(1)
         idx = steps.index(target)
-        return set(steps[idx:])
+        return set(steps[idx:]), None
 
     # step1 → only step1
     if pattern in steps:
-        return {pattern}
+        return {pattern}, None
     else:
         typer.echo(f"Error: step '{pattern}' not found in pipeline.", err=True)
         raise typer.Exit(1)
@@ -334,6 +356,14 @@ def _parse_step_arguments(
         key = key.strip()
         # keep payload as provided, except trimming one leading space after ':'
         value = value.lstrip() if sep else ""
+
+        if key in res and res[key] != value:
+            typer.echo(
+                f"Error: Conflicting step args for '{key}': '{res[key]}' vs '{value}'",
+                err=True,
+            )
+            raise typer.Exit(1)
+
         res[key] = value
 
     if valid_step_names is not None:
@@ -342,8 +372,12 @@ def _parse_step_arguments(
         invalid_steps = []
 
     if len(invalid_steps) != 0:
-        raise ValueError(
-            f"Steps {invalid_steps} were not recognized. Available: {valid_step_names}"
+        typer.echo(
+            "Error: Steps "
+            f"{invalid_steps} were not recognized. "
+            f"Available: {valid_step_names}",
+            err=True,
         )
+        raise typer.Exit(1)
 
     return res

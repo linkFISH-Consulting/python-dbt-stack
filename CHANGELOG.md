@@ -10,6 +10,23 @@ TLDR:
 - Features v0.1.0 (Minor Version)
 - Breaking Changes v1.0.0 (Major Version)
 
+
+
+## [1.0.0] - 2026-05-29
+
+### Added
+
+- Improved Readme and docs, now including the deployment instrucitons in the wheelhouse.
+- CLI: Added `-q` `--quiet` option to suppress step summary tables before and after run.
+- CLI: A few python tests
+
+### Fixed
+- CLI: Logging step results with messages that contain `[tags]` no longer crashes due to markup errors.
+
+### Changed
+- Breaking: CLI: removed `-a` Option, now combined with of `-s` `--select`
+- Breaking: Renamed `"SKIP"` step status to `"OMIT"`, so we can use `"SKIP"` to indicate a step that was skipped due to a previous step failing (consistent with dbt's behavior)
+
 ## [0.4.0] - 2026-05-04
 
 ### Added
@@ -84,6 +101,7 @@ TLDR:
 -  Pinned duckdb to 1.3.2. to avoid this [issue](https://github.com/duckdb/duckdb/issues/19171)
 
 
+[1.0.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/linkFISH-Consulting/python-dbt-stack/compare/v0.2.0...v0.2.1

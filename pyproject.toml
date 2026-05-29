@@ -1,6 +1,6 @@
 [project]
 name = "lf-py-stack"
-version = "0.4.0"
+version = "1.0.0"
 description = "UV Project with fixed Python Versions and DBT dependencies"
 readme = "README.md"
 authors = [

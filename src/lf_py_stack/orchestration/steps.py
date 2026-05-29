@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table, box
 from rich.terminal_theme import MONOKAI
 
@@ -28,11 +29,11 @@ class StepResult:
     it as loaded assets. The StepResults conveniently enable conditional operations in
     subsequent steps, e.g. by checking the status of previous ones.
 
-    The "SKIP" status is used when the user choses to not run a particular step.
+    The "OMIT" status is used when the user choses to not run a particular step.
     In this case, we inject SKIP StepResults into hamiltons DAG via the `overrides` arg.
     """
 
-    status: Literal["SKIP", "PASS", "FAIL"] = "PASS"
+    status: Literal["OMIT", "SKIP", "PASS", "FAIL"] = "PASS"
     message: str = ""
     name: str = ""
 
@@ -99,7 +100,7 @@ def log_step_nodes_table(
 
         if show_docstrings:
             description = inspect.getdoc(step_func) or "No documentation"
-            row.append(description)
+            row.append(escape(description))
 
         table.add_row(*row, end_section=True)
 
@@ -162,13 +163,15 @@ def log_step_results_table(
             else "bold red"
             if step.status == "FAIL"
             else "dim white"
+            if step.status == "OMIT"
+            else "yellow"
             if step.status == "SKIP"
             else "default"
         )
         table.add_row(
             step.name,
             f"[{status_style}]{step.status}[/]",
-            step.message,
+            escape(step.message),
             end_section=True,
         )
 
