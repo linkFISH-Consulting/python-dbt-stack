@@ -10,7 +10,9 @@ TLDR:
 - Features v0.1.0 (Minor Version)
 - Breaking Changes v1.0.0 (Major Version)
 
-## Upcoming
+
+
+## [1.0.0] - 2026-05-29
 
 ### Added
 

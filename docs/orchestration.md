@@ -3,7 +3,7 @@
 
 We now include some lightweight tools to orchestrate simple pipelines via hamilton.
 
-To get started, take a look at the [example](./src/lf_py_stack/orchestration/example.py), and then run it with python, providing paramters as needed.
+To get started, take a look at the [example](/src/lf_py_stack/orchestration/example.py), and then run it with python, providing paramters as needed.
 
 Typical commands are:
 ```bash
