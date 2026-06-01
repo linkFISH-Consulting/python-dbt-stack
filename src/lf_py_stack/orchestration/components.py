@@ -33,6 +33,9 @@ def run_cli_command(
     No need to load or pass the .env file again)
     """
 
+    if log is not None:
+        log.debug(f"Running command: {command}")
+
     lines = []
 
     with subprocess.Popen(
@@ -41,6 +44,7 @@ def run_cli_command(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # merge sterr into stdout
         text=True,
+        errors="replace", # replace invalid characters of output (esp. for windows)
         bufsize=1,  # line-buffered
         env=env,
     ) as proc:
