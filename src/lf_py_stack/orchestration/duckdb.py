@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated
@@ -41,9 +42,23 @@ def shrink_duckdb_command(
             "(can be specified multiple times)",
         ),
     ] = [],
+    exclude_table_name_pattern: Annotated[
+        str | None,
+        typer.Option(
+            "--exclude-table-name-pattern",
+            "-e",
+            help="Regex pattern for table names to exclude from all schemas "
+            "(e.g. '.*_backup|__internal_.*')",
+        ),
+    ] = None,
 ):
-    """Shrink a DuckDB file by keeping only tables from specified schemas."""
-    shrink_duckdb(input_file, output_file, schemas)
+    """Shrink a DuckDB file by keeping only tables from specified schemas.
+
+    Optionally excludes tables whose names match the given regex pattern.
+    This is evaluated *after* schema filtering — excluded tables are removed
+    even if they reside in an included schema.
+    """
+    shrink_duckdb(input_file, output_file, schemas, exclude_table_name_pattern)
 
 
 # function that can be used in orchestration workflows
@@ -51,9 +66,26 @@ def shrink_duckdb(
     input_file: Path,
     output_file: Path | None,
     schemas: list[str],
+    exclude_table_name_pattern: str | None = None,
     log: logging.Logger | None = None,
 ):
-    """Shrink a DuckDB file by keeping only tables from specified schemas."""
+    """Shrink a DuckDB file by keeping only tables from specified schemas.
+
+    Args:
+        input_file: Path to the source DuckDB file.
+        output_file: Path for the minimized copy. Defaults to ``<stem>_small<suffix>``
+            next to the original.
+        schemas: Schemas whose tables are copied into the output database.
+        exclude_table_name_pattern: Optional regex pattern. Any table whose
+            *table name* matches this pattern (full-string match) is skipped,
+            even if it belongs to an included schema. Pass ``None`` for no
+            exclusions.
+        log: Logger used for progress reporting. Defaults to a named logger
+            under ``lf_py_stack.duckdb``.
+
+    Raises:
+        ValueError: If none of the requested schemas exist in the source DB.
+    """
 
     if log is None:
         log = logging.getLogger("lf_py_stack.duckdb")
@@ -65,6 +97,8 @@ def shrink_duckdb(
     log.info(f"Minimizing DuckDB file: {input_file}")
     log.info(f"Output file: {output_file}")
     log.info(f"Schemas to copy: {', '.join(schemas)}")
+    if exclude_table_name_pattern is not None:
+        log.info(f"Excluding tables matching pattern: '{exclude_table_name_pattern}'")
 
     # Check if output file already exists
     if output_file.exists():
@@ -74,7 +108,9 @@ def shrink_duckdb(
         output_file.unlink()
 
     try:
-        _copy_tables_to_new_db(input_file, output_file, schemas, log=log)
+        _copy_tables_to_new_db(
+            input_file, output_file, schemas, exclude_table_name_pattern, log=log
+        )
 
         # Report file sizes
         input_size = input_file.stat().st_size / (1024 * 1024)  # MB
@@ -96,18 +132,28 @@ def _copy_tables_to_new_db(
     source_path: Path,
     target_path: Path,
     schemas_to_copy: list[str],
+    exclude_table_name_pattern: str | None,
     log: logging.Logger,
 ) -> None:
-    """
-    Copy tables from specified schemas to a new DuckDB file.
+    """Copy tables from specified schemas to a new DuckDB file.
 
     Args:
-        source_path: Path to source DuckDB file
-        target_path: Path to target DuckDB file
-        schemas_to_copy: List of schema names to copy
+        source_path: Path to source DuckDB file.
+        target_path: Path to the freshly created target database.
+        schemas_to_copy: List of schema names whose tables should be copied.
+        exclude_table_name_pattern: Optional regex pattern. Any table whose
+            name fully matches this pattern is skipped, even if it resides in
+            an included schema.
+        log: Logger for progress reporting.
     """
 
     start_time = datetime.now()
+
+    # Pre-compile the exclusion pattern (if any)
+    exclude_re = (
+        re.compile(exclude_table_name_pattern) if exclude_table_name_pattern else None
+    )
+
     log.debug(f"Opening source database: {source_path}")
 
     with duckdb.connect(str(source_path), read_only=True) as source_conn:
@@ -160,7 +206,12 @@ def _copy_tables_to_new_db(
                     )
 
                 target_conn.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+
                 for table in tables:
+                    if exclude_re and exclude_re.fullmatch(table):
+                        log.debug(f"Excluding table (pattern match): {schema}.{table}")
+                        continue
+
                     log.info(f"Copying table: {schema}.{table}")
                     target_conn.execute(
                         f"ATTACH '{source_path}' AS source_db (READ_ONLY)"
