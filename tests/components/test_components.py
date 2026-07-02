@@ -20,6 +20,37 @@ def test_run_cli_command_nonzero_exit_code() -> None:
     assert "boom" in output
 
 
+def test_run_cli_command_handles_invalid_utf8_bytes(tmp_path: Path) -> None:
+    """Ensure run_cli_command survives subprocess output containing invalid UTF-8.
+
+    On Windows the system console encoding (e.g. GBK, CP1252) can produce byte
+    sequences that are not valid UTF-8.  Without ``errors="replace"`` the
+    subprocess pipe would raise a UnicodeDecodeError and crash the run.
+
+    We write a small script that spits out raw invalid-UTF-8 bytes via stdout
+    and verify that run_cli_command completes without raising.
+    """
+    # A script that writes known-invalid-UTF-8 bytes to stdout's buffer.
+    # \xff\xfe are never valid in UTF-8, \xc0\x80 is an overlong encoding,
+    # and \x80 is a standalone continuation byte.
+    bad_script = tmp_path / "bad_output.py"
+    bad_script.write_bytes(
+        b"import sys\n"
+        b"sys.stdout.buffer.write(b'hello ')\n"
+        b"sys.stdout.buffer.write(b'\\xff\\xfe\\xc0\\x80\\x80')\n"
+        b"sys.stdout.buffer.write(b' world\\n')\n"
+    )
+
+    code, output = run_cli_command(
+        f"python {bad_script}",
+        print_to_stdout=False,
+    )
+
+    assert code == 0
+    assert "hello" in output
+    assert "world" in output
+
+
 def test_log_dbt_versions_minimal_with_mocked_yaml_files(tmp_path: Path) -> None:
     # dbt_project.yml
     (tmp_path / "dbt_project.yml").write_text(
@@ -59,7 +90,6 @@ packages:
 
     out = log_dbt_versions(
         dbt_project_dir=tmp_path,
-        return_format="minimal",
         show_source_file=True,
     )
 

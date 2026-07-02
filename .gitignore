@@ -49,6 +49,7 @@ coverage.xml
 # IDE
 .vscode/
 .idea/
+.qwen
 *.swp
 *.swo
 
