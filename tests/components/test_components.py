@@ -90,7 +90,6 @@ packages:
 
     out = log_dbt_versions(
         dbt_project_dir=tmp_path,
-        return_format="minimal",
         show_source_file=True,
     )
 

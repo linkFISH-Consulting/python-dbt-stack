@@ -184,66 +184,36 @@ def _get_dbt_versions(
 def log_dbt_versions(
     dbt_project_dir: Path | str | None = None,
     log: logging.Logger | None = None,
-    print_to_stdout: bool = False,
-    return_format: Literal["minimal", "plain", "colored", "html"] = "minimal",
+    print_to_stdout: bool = True,
     show_source_file=False,
 ):
     """
-    Log Versions of installed dbt packages in various formats.
+    Log Versions of installed dbt packages.
 
     return_format:
-        - minimal: just name -> version
-        - plain:   formatted as a table
-        - colored: with colored columns
-        - html:    render for email sending
+        - name -> version [revision if found] (source file if requested)
     """
 
     package_versions = get_dbt_versions(dbt_project_dir)
+    text = "DBT Package Versions:\n"
 
-    if return_format == "minimal":
-        text = ""
-        for idx, p in enumerate(package_versions.values()):
-            text += f"{p.package} {p.version or p.revision}"
-            if p.source_file and show_source_file:
-                text +=f" (via {p.source_file})"
-            if idx != len(package_versions.values()) -1 :
-                text += "\n"
+    for idx, p in enumerate(package_versions.values()):
+        text += f"{p.package}"
+        if p.version:
+            text += f" {p.version}"
+        if p.revision:
+            text += f" [rev {p.revision}]"
+        if p.source_file and show_source_file:
+            text +=f" (via {p.source_file})"
+        if idx != len(package_versions.values()) -1 :
+            text += "\n"
 
-        if print_to_stdout:
-            print(text)
-    else:
-        console = Console(
-            record=True,
-            file=open(os.devnull, "wt"),
-        )
-        table = Table(title="dbt Package Versions", box=box.SIMPLE)
-        table.add_column("Package", style="cyan", overflow="fold")
-        table.add_column("Version", style="green", min_width=9)
-        table.add_column("Revision", style="green")
-        if show_source_file:
-            table.add_column("Source File")
+    if log is not None:
+        log.info(f"\n{text}", extra={"log_to_cli": print_to_stdout})
+    elif print_to_stdout:
+        print(text)
 
-        for p in package_versions.values():
-            table.add_row(
-                p.package,
-                p.version,
-                p.revision,
-                p.source_file if show_source_file else None,
-            )
-
-        console.print(table)
-        text = console.export_text(clear=False, styles=True)
-
-        if print_to_stdout:
-            print(text)
-
-        if log is not None:
-            log.info(f"\n{text}", extra={"log_to_cli": False})
-
-        if return_format == "html":
-            text = console.export_html(theme=MONOKAI)
-
-    if return_format in ["plain", "html", "minimal"]:
-        text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
+    # remove color sequences
+    text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
 
     return text
