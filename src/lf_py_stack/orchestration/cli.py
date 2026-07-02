@@ -205,6 +205,11 @@ def run(
             print_to_stdout=True,
         )
 
+    # Exit with non-zero code if any step failed, so CI pipelines pick this up.
+    for result in step_results.values():
+        if result.status == "FAIL":
+            raise typer.Exit(1)
+
 
 @cli_app.command(name="list")
 def list_steps():
