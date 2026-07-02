@@ -33,7 +33,7 @@ class StepResult:
     In this case, we inject SKIP StepResults into hamiltons DAG via the `overrides` arg.
     """
 
-    status: Literal["OMIT", "SKIP", "PASS", "FAIL"] = "PASS"
+    status: Literal["OMIT", "SKIP", "PASS", "FAIL", "WARN"] = "PASS"
     message: str = ""
     name: str = ""
 
@@ -162,6 +162,8 @@ def log_step_results_table(
             if step.status == "PASS"
             else "bold red"
             if step.status == "FAIL"
+            else "yellow"
+            if step.status == "WARN"
             else "dim white"
             if step.status == "OMIT"
             else "yellow"

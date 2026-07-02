@@ -210,6 +210,11 @@ def run(
         if result.status == "FAIL":
             raise typer.Exit(1)
 
+    # When LFPY_WARN_EXIT_1 is set, exit 1 on any WARN status step.
+    for result in step_results.values():
+        if result.status == "WARN" and _is_truthy(os.environ.get("LFPY_WARN_EXIT_1")):
+            raise typer.Exit(1)
+
 
 @cli_app.command(name="list")
 def list_steps():
@@ -239,6 +244,10 @@ def _get_driver(module: ModuleType | str):
         module = sys.modules[module]
     return driver.Driver({}, module, adapter=DictResult())
 
+def _is_truthy(env_var : str | int | None) -> bool:
+    if str(env_var).lower() in {"1", "true", "yes"}:
+        return True
+    return False
 
 def _module_steps(
     module: ModuleType | str, driver: driver.Driver

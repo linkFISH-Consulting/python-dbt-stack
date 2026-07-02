@@ -52,6 +52,47 @@ if __name__ == "__main__":
     assert "Orchestration run complete" in stdout
 
 
+def test_cli_warn_exit_code_when_env_var_set(tmp_path: Path) -> None:
+    """Test that LFPY_WARN_EXIT_1 causes exit code 1 when a step returns WARN.
+
+    A warning should be surfaced visually (yellow in the results table) but
+    only cause a non-zero exit code when the LFPY_WARN_EXIT_1 env var is set.
+    """
+    pipeline = tmp_path / "pipeline_warn.py"
+    pipeline.write_text(
+        """\
+from lf_py_stack.orchestration import StepResult, cli_app
+
+def warn_step() -> StepResult:
+    return StepResult("WARN", "This ran but flagged a warning")
+
+if __name__ == "__main__":
+    cli_app()
+""",
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["LFPY_WARN_EXIT_1"] = "1"
+
+    result = subprocess.run(
+        [sys.executable, str(pipeline), "run", "-s", "warn_step"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+
+    stdout = result.stdout
+    stderr = result.stderr
+
+    assert result.returncode == 1, (
+        f"Expected exit code 1 when LFPY_WARN_EXIT_1 is set and step has WARN.\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+    )
+    assert "warn_step" in stdout
+
+
 def test_example_run_all_omit_step_f(tmp_path: Path) -> None:
     """Integration test for example orchestration flow.
 
