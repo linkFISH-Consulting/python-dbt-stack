@@ -11,11 +11,12 @@ TLDR:
 - Breaking Changes v1.0.0 (Major Version)
 
 
-## [1.0.1] - 2026-07-02
+## [1.0.1] - 2026-07-15
 
 ### Added
 - "WARN" Step level, and new env var to `LFPY_WARN_EXIT_1` that will cause warnings to emit exit code 1 (useful if we want warnings to end CI Pipelines)
 - duckdb shrinking now has an option to pass a regex to exclude tables, even if their schema should be included: `--exclude-table-name-pattern`
+- [coasti installer](https://github.com/coasti-org/coasti_installer) (with [superset-io](https://github.com/coasti-org/superset_io)) now included as a dependency.
 
 ### Fixed
 - The `run_cli_command` no longer crashes when commands return badly encoded chars (mainly windows)

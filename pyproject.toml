@@ -25,6 +25,7 @@ dependencies = [
     "dbt-postgres>=1.9.0,<1.10",
     # Orchestration
     "sf-hamilton>=1.89.0",
+    "coasti>=0.2.3",
 ]
 
 [dependency-groups]
