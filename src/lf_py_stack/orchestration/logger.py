@@ -7,7 +7,6 @@ We have a helper to get a logger:
 - messages in the log file contain the step that obtained the logger via `get_logger`
 """
 
-import inspect
 import logging
 import re
 from pathlib import Path
@@ -67,7 +66,7 @@ def get_logger(step_name: str | None = None) -> LfPyLogger:
     if file_path is None or not Path(file_path).parent.is_dir():
         log.debug(f"Skipping log file creation because {file_path=} does not exist")
     else:
-        file_handler = logging.FileHandler(file_path)
+        file_handler = logging.FileHandler(file_path, encoding="utf-8")
         file_handler.name = "lfpy_file_handler"
         file_handler.setFormatter(
             StripAnsiFormatter(

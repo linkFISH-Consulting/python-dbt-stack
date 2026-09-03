@@ -34,7 +34,15 @@ if __name__ == "__main__":
 
     env = os.environ.copy()
     result = subprocess.run(
-        [sys.executable, str(pipeline), "run", "-s", "clean_step_a", "-s", "clean_step_b"],
+        [
+            sys.executable,
+            str(pipeline),
+            "run",
+            "-s",
+            "clean_step_a",
+            "-s",
+            "clean_step_b",
+        ],
         cwd=tmp_path,
         capture_output=True,
         text=True,
@@ -135,7 +143,9 @@ def test_example_run_all_omit_step_f(tmp_path: Path) -> None:
     stderr = result.stderr
 
     # step_c FAILs in this example → exit 1
-    assert result.returncode == 1, f"Expected non-zero exit code (step_c FAILs).\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+    assert result.returncode == 1, (
+        f"Expected non-zero exit code (step_c FAILs).\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+    )
 
     # High-level flow
     assert "Running the following steps:" in stdout

@@ -41,6 +41,7 @@ def step_c(step_b: StepResult) -> StepResult:
     except ZeroDivisionError:
         return StepResult("FAIL", "Something went wrong")
 
+
 def step_d(step_c: StepResult) -> StepResult:
     """Check status of previous steps to propagate errors and skip steps"""
     log = get_logger()
@@ -58,7 +59,6 @@ def step_e(step_d: StepResult) -> StepResult:
     """
     log = get_logger()
     log.info("Hello from step_e")
-
 
     # by default, the run_cli_command uses your current environment variables,
     # which includes the .env file our main entrypoint has loaded (cli `run`)

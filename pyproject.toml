@@ -1,6 +1,6 @@
 [project]
 name = "lf-py-stack"
-version = "1.0.2"
+version = "1.0.3"
 description = "UV Project with fixed Python Versions and DBT dependencies"
 readme = "README.md"
 authors = [
@@ -50,6 +50,7 @@ include = ["lf_py_stack/_bundles/*.bundle"]
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+exclude = ["tests/**"]
 target-version = "py312"
 
 [tool.ruff.lint]

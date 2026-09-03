@@ -11,6 +11,15 @@ TLDR:
 - Breaking Changes v1.0.0 (Major Version)
 
 
+## [1.0.3] - Upcoming
+
+###  Fixed
+- Windows: Logs with non-unicode chars should not crash us anymore (hopefully)
+
+### Dev
+- Setup CI/CD Actions for ruff and mypy
+
+
 ## [1.0.2] - 2026-07-15
 
 ### Added

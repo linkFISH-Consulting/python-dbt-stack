@@ -40,7 +40,8 @@ def run_cli_command(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # merge sterr into stdout
         text=True,
-        errors="replace", # replace invalid characters of output (esp. for windows)
+        encoding="utf-8",  # Needed for Windows
+        errors="replace",  # replace invalid characters of output (esp. for windows)
         bufsize=1,  # line-buffered
         env=env,
     ) as proc:
@@ -155,8 +156,10 @@ def _get_dbt_versions(
                 if isinstance(data, dict):
                     table_data.append(
                         PackageVersions(
-                            package=data.get(
-                                "package", data.get("git", "not recognized")
+                            package=str(
+                                data.get("package")
+                                or data.get("git")
+                                or "not recognized"
                             ),
                             version=data.get("version"),
                             revision=data.get("revision"),
@@ -200,8 +203,8 @@ def log_dbt_versions(
         if p.revision:
             text += f" [rev {p.revision}]"
         if p.source_file and show_source_file:
-            text +=f" (via {p.source_file})"
-        if idx != len(package_versions.values()) -1 :
+            text += f" (via {p.source_file})"
+        if idx != len(package_versions.values()) - 1:
             text += "\n"
 
     if log is not None:

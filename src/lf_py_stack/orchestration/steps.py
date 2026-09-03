@@ -8,8 +8,10 @@ import inspect
 import logging
 import os
 import re
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from rich.console import Console
@@ -78,7 +80,7 @@ def log_step_nodes_table(
     console = Console(
         width=90,
         record=True,
-        file=open(os.devnull, "wt"),
+        file=Path(os.devnull).open("w", encoding="utf-8", errors="replace"),
     )
 
     # https://rich.readthedocs.io/en/stable/appendix/box.html#appendix-box
@@ -108,7 +110,7 @@ def log_step_nodes_table(
     text = console.export_text(clear=False, styles=True)
 
     if print_to_stdout:
-        print(text)
+        _safe_print(text)
 
     if log is not None:
         log.info(f"\n{text}", extra={"log_to_cli": False})
@@ -148,7 +150,7 @@ def log_step_results_table(
     console = Console(
         width=90,
         record=True,
-        file=open(os.devnull, "wt"),
+        file=Path(os.devnull).open("w", encoding="utf-8", errors="replace"),
     )
     table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD)
 
@@ -181,7 +183,7 @@ def log_step_results_table(
     text = console.export_text(clear=False, styles=True)
 
     if print_to_stdout:
-        print(text)
+        _safe_print(text)
 
     if log is not None:
         log.info(f"\n{text}", extra={"log_to_cli": False})
@@ -193,3 +195,19 @@ def log_step_results_table(
         text = re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", text)
 
     return text
+
+
+def _safe_print(text: str) -> None:
+    """Write text without failing when stdout cannot represent Unicode."""
+    stream = sys.stdout
+    encoding = stream.encoding or "utf-8"
+
+    try:
+        # Match the stream encoding first so unsupported characters are replaced
+        # before the stream attempts its own strict encoding.
+        safe_text = text.encode(encoding, errors="replace").decode(encoding)
+    except (LookupError, UnicodeError):
+        safe_text = text.encode("ascii", errors="backslashreplace").decode("ascii")
+
+    stream.write(safe_text)
+    stream.flush()
