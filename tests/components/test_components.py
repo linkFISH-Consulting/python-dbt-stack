@@ -1,6 +1,24 @@
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from lf_py_stack.orchestration.components import log_dbt_versions, run_cli_command
+
+
+def test_run_cli_command_decodes_output_as_utf8() -> None:
+    process = MagicMock()
+    process.__enter__.return_value = process
+    process.stdout = iter(["Grüße\n"])
+    process.returncode = 0
+
+    with patch(
+        "lf_py_stack.orchestration.components.subprocess.Popen",
+        return_value=process,
+    ) as popen:
+        code, output = run_cli_command("echo ignored", print_to_stdout=False)
+
+    assert code == 0
+    assert output == "Grüße\n"
+    assert popen.call_args.kwargs["encoding"] == "utf-8"
 
 
 def test_run_cli_command_captures_output_without_printing() -> None:

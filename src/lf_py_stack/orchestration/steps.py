@@ -10,6 +10,7 @@ import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from rich.console import Console
@@ -78,7 +79,7 @@ def log_step_nodes_table(
     console = Console(
         width=90,
         record=True,
-        file=open(os.devnull, "wt"),
+        file=Path(os.devnull).open("w", encoding="utf-8", errors="replace"),
     )
 
     # https://rich.readthedocs.io/en/stable/appendix/box.html#appendix-box
@@ -148,7 +149,7 @@ def log_step_results_table(
     console = Console(
         width=90,
         record=True,
-        file=open(os.devnull, "wt"),
+        file=Path(os.devnull).open("w", encoding="utf-8", errors="replace"),
     )
     table = Table(title=title, box=box.MINIMAL_DOUBLE_HEAD)
 

@@ -40,7 +40,8 @@ def run_cli_command(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # merge sterr into stdout
         text=True,
-        errors="replace", # replace invalid characters of output (esp. for windows)
+        encoding="utf-8",  # Needed for Windows
+        errors="replace",  # replace invalid characters of output (esp. for windows)
         bufsize=1,  # line-buffered
         env=env,
     ) as proc:
