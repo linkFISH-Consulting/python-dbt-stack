@@ -66,9 +66,8 @@ def send_mail(
     elif body_format == "plain":
         msg.attach(MIMEText(body, "plain"))
     elif body_format == "mono":
-        body = f'<pre style="font-family: monospace, monospace; white-space: pre;">{body}</pre>'
+        body = f'<pre style="font-family: monospace; white-space: pre;">{body}</pre>'
         msg.attach(MIMEText(body, "html"))
-
 
     if attachments is None:
         attachments = []

@@ -244,10 +244,12 @@ def _get_driver(module: ModuleType | str):
         module = sys.modules[module]
     return driver.Driver({}, module, adapter=DictResult())
 
-def _is_truthy(env_var : str | int | None) -> bool:
+
+def _is_truthy(env_var: str | int | None) -> bool:
     if str(env_var).lower() in {"1", "true", "yes"}:
         return True
     return False
+
 
 def _module_steps(
     module: ModuleType | str, driver: driver.Driver

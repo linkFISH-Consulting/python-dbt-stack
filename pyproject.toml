@@ -50,6 +50,7 @@ include = ["lf_py_stack/_bundles/*.bundle"]
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+exclude = ["tests/**"]
 target-version = "py312"
 
 [tool.ruff.lint]

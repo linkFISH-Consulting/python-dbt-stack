@@ -7,7 +7,6 @@ We have a helper to get a logger:
 - messages in the log file contain the step that obtained the logger via `get_logger`
 """
 
-import inspect
 import logging
 import re
 from pathlib import Path
