@@ -1,7 +1,39 @@
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from lf_py_stack.orchestration.components import log_dbt_versions, run_cli_command
+from lf_py_stack.orchestration.steps import log_step_nodes_table
+
+
+class LegacyEncodingStream:
+    encoding = "cp1252"
+
+    def __init__(self) -> None:
+        self.output = ""
+
+    def write(self, text: str) -> int:
+        text.encode(self.encoding)
+        self.output += text
+        return len(text)
+
+    def flush(self) -> None:
+        pass
+
+
+def test_log_step_nodes_table_handles_legacy_stdout_encoding(monkeypatch) -> None:
+    stream = LegacyEncodingStream()
+    monkeypatch.setattr(sys, "stdout", stream)
+
+    def step_with_unicode_description() -> None:
+        """Description with an unsupported box-drawing character: ╷"""
+
+    log_step_nodes_table(
+        {"step_with_unicode_description": step_with_unicode_description},
+        print_to_stdout=True,
+    )
+
+    assert "step_with_unicode_description" in stream.output
 
 
 def test_run_cli_command_decodes_output_as_utf8() -> None:
