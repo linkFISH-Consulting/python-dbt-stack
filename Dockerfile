@@ -58,8 +58,8 @@ RUN --mount=type=cache,sharing=locked,target=/var/lib/apt/lists \
     wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list
 
-RUN --mount=target=/var/lib/apt/lists,type=cache \
-    --mount=type=cache,target=/var/cache/apt,type=cache \
+RUN --mount=type=cache,sharing=locked,target=/var/lib/apt/lists \
+    --mount=type=cache,sharing=locked,target=/var/cache/apt \
     apt-get update && \
     apt-get install -y --no-install-recommends \
     msodbcsql18

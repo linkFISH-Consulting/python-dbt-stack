@@ -44,8 +44,6 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-        with:
-          version: "0.11.7"
 
       - name: Upgrade build tools
         run: uv pip install --system --upgrade build wheel
