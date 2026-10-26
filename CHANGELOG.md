@@ -11,7 +11,7 @@ TLDR:
 - Breaking Changes v1.0.0 (Major Version)
 
 
-## [1.0.3] - Upcoming
+## [1.1.0] - Upcoming
 
 ###  Fixed
 - Windows: Logs with non-unicode chars should not crash us anymore (hopefully)
@@ -20,6 +20,175 @@ TLDR:
 ### Dev
 - Setup CI/CD Actions for ruff and mypy
 
+### Dependencies
+
+- Updated Dependencies. Noteworthy:
+    - coasti 0.2.3 -> 0.3.0
+    - coasti superset-io 0.1.2 -> 0.3.0
+    - dbt-core 1.9 -> 1.12 (now pinned to < 1.13)
+    - duckdb 1.5.2 -> 1.5.6 (now pinned to < 2.0)
+    - copier==9.17.2 (pinned by coasti installer)
+    - sqlalchemy 2.0.49 -> 2.1.6
+
+```text
+ - annotated-doc==0.0.4
+ + annotated-doc==0.0.5
+ - annotated-types==0.7.0
+ + annotated-types==0.8.0
+ + apache-hamilton==1.90.0
+ + ast-serialize==0.13.1
+ - azure-core==1.39.0
+ - azure-identity==1.25.3
+ - certifi==2026.2.25
+ + certifi==2026.10.23
+ - cffi==2.0.0
+ - charset-normalizer==3.4.7
+ + charset-normalizer==3.5.2
+ - click==8.3.2
+ + click==8.5.0
+ - coasti==0.2.3
+ + coasti==0.3.0
+ - coasti-superset-io==0.1.2
+ + coasti-superset-io==0.3.0
+ - copier==9.17.0
+ + copier==9.17.2
+ - cryptography==46.0.7
+ - dbt-adapters==1.22.10
+ + dbt-adapters==1.24.5
+ - dbt-common==1.37.3
+ + dbt-common==1.39.0
+ - dbt-core==1.9.10
+ + dbt-core==1.12.6
+ + dbt-core-experimental-parser==2.0.8
+ - dbt-duckdb==1.9.6
+ + dbt-duckdb==1.11.0
+ - dbt-fabric==1.9.3
+ - dbt-postgres==1.9.1
+ + dbt-postgres==1.11.0
+ - dbt-protos==1.0.443
+ + dbt-protos==1.0.615
+ - dbt-semantic-interfaces==0.7.5
+ - dbt-sqlserver==1.9.0
+ + dbt-sqlserver==1.12.1
+ - distlib==0.4.0
+ + distlib==0.4.4
+ - duckdb==1.5.2
+ + duckdb==1.5.6
+ - dunamai==1.26.1
+ + dunamai==1.26.3
+ - filelock==3.28.0
+ + filelock==4.2.4
+ - funcy==2.0
+ + funcy==2.1
+ - identify==2.6.18
+ + identify==2.6.20
+ - idna==3.11
+ + idna==3.20
+ - importlib-metadata==8.9.0
+ + importlib-metadata==10.1.0
+ - iniconfig==2.3.0
+ + iniconfig==2.3.1
+ - lf-py-stack==1.0.3
+ + lf-py-stack==1.1.0
+ - librt==0.9.0
+ + librt==0.16.0
+ - markdown-it-py==4.0.0
+ + markdown-it-py==4.2.0
+ - markupsafe==3.0.3
+ + markupsafe==3.0.4
+ - mashumaro==3.14
+ + mashumaro==3.17
+ + metricflow==0.213.0
+ - msal==1.36.0
+ - msal-extensions==1.3.1
+ - msgpack==1.1.2
+ + msgpack==1.2.3
+ - mypy==1.19.1
+ + mypy==2.4.0
+ - networkx==3.6.1
+ + networkx==3.7
+ - nodeenv==1.10.0
+ + nodeenv==1.11.0
+ - numpy==2.4.4
+ + numpy==2.5.4
+ + opentelemetry-api==1.45.1
+ - packaging==26.1
+ + packaging==26.3
+ - pandas==3.0.2
+ + pandas==3.1.0
+ - pathspec==0.12.1
+ + pathspec==1.0.4
+ - platformdirs==4.9.6
+ + platformdirs==4.13.5
+ - pluggy==1.6.0
+ + pluggy==1.7.0
+ - plumbum==2.0.1
+ + plumbum==2.0.2
+ - polars==1.39.3
+ + polars==2.1.0
+ - polars-runtime-32==1.39.3
+ + polars-runtime-32==2.1.0
+ - pre-commit==4.5.1
+ + pre-commit==4.7.0
+ - prompt-toolkit==3.0.52
+ + prompt-toolkit==3.0.53
+ - psycopg2-binary==2.9.11
+ + psycopg2-binary==2.9.13
+ - pycparser==3.0
+ - pydantic==2.13.2
+ + pydantic==2.14.1
+ - pydantic-core==2.46.2
+ + pydantic-core==2.50.1
+ - pygments==2.20.0
+ + pygments==2.21.0
+ - pyjwt==2.12.1
+ - pyodbc==5.1.0
+ - pytest==9.0.3
+ + pytest==9.1.1
+ - python-discovery==1.2.2
+ + python-discovery==1.6.4
+ - python-dotenv==1.2.2
+ + python-dotenv==1.2.4
+ - python-slugify==8.0.4
+ + python-slugify==9.1.3
+ - pytimeparse==1.1.8
+ + pytimeparse==1.1.10
+ - pytz==2026.1.post1
+ + pytz==2026.5
+ + rapidfuzz==3.14.6
+ - requests==2.33.1
+ + requests==2.34.2
+ - rpds-py==0.30.0
+ + rpds-py==2026.9.1
+ - ruff==0.15.11
+ + ruff==0.17.2
+ - scipy==1.17.1
+ + scipy==1.18.1
+ - sf-hamilton==1.89.0
+ + sf-hamilton==1.90.0
+ - sqlalchemy==2.0.49
+ + sqlalchemy==2.1.6
+ + sqlglot==30.24.0
+ - sqlparse==0.5.5
+ + sqlparse==0.6.0
+ + tabulate==0.10.0
+ - typer==0.24.1
+ + typer==0.27.3
+ - types-pyyaml==6.0.12.20260408
+ + types-pyyaml==6.0.12.20260906
+ - typing-extensions==4.15.0
+ + typing-extensions==4.16.0
+ - typing-inspection==0.4.2
+ + typing-inspection==0.4.4
+ - urllib3==2.6.3
+ + urllib3==2.8.0
+ - virtualenv==21.2.4
+ + virtualenv==21.14.13
+ - wcwidth==0.8.2
+ + wcwidth==0.9.4
+ - zipp==3.23.1
+ + zipp==4.1.2
+```
 
 ## [1.0.2] - 2026-07-15
 
