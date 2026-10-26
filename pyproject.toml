@@ -1,6 +1,6 @@
 [project]
 name = "lf-py-stack"
-version = "1.0.3"
+version = "1.1.0"
 description = "UV Project with fixed Python Versions and DBT dependencies"
 readme = "README.md"
 authors = [
@@ -18,14 +18,14 @@ dependencies = [
     "ruamel-yaml",
     "openpyxl>=3.1.5", # excel
     # DBT
-    "dbt-core>=1.9.8,<1.10", # Usually limited by our dbt-sqlserver dependency
-    "dbt-duckdb>=1.9.4,<1.10",
-    "duckdb>=1.5.1",
-    "dbt-sqlserver>=1.9.0",
-    "dbt-postgres>=1.9.0,<1.10",
+    "dbt-core>=1.12,<1.13", # Usually limited by our dbt-sqlserver dependency
+    "dbt-duckdb>=1.11",
+    "duckdb>=1.5.1, <2.0",
+    "dbt-sqlserver>=1.12",
+    "dbt-postgres>=1.11",
     # Orchestration
-    "sf-hamilton>=1.89.0",
-    "coasti>=0.2.3",
+    "sf-hamilton>=1.89.0, <2.0",
+    "coasti>=0.3.0",
 ]
 
 [dependency-groups]
