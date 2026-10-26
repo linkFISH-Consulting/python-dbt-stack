@@ -29,6 +29,7 @@ def send_mail(
     use_tls: bool = True,
     use_ssl: bool = False,
     verbose: bool = False,
+    timeout: int = 30,
     log: logging.Logger | None = None,
 ):
     """
@@ -86,11 +87,26 @@ def send_mail(
                 )
                 msg.attach(part)
         else:
-            typer.echo(f"Warning: Attachment not found: {attachment_path}", err=True)
+            log.warning(f"Attachment not found, skipping: {attachment_path}")
+
+    # Log some metadata without exposing the actual message body or attachment data.
+    log.debug(f"Email headers: {dict(msg.items())}")
+    for part in msg.walk():
+        if not part.is_multipart():
+            payload = part.get_payload(decode=True) or b""
+            log.debug(
+                f"Email part: content_type={part.get_content_type()} "
+                f"filename={part.get_filename()} size={len(payload)} bytes"
+            )
 
     if use_ssl:
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        with smtplib.SMTP_SSL(
+            smtp_server,
+            port,
+            context=context,
+            timeout=timeout,
+        ) as server:
             server.set_debuglevel(1 if verbose else 0)
             # TODO: redirect verbose output to logger
             if username == "" and password == "":
@@ -99,7 +115,11 @@ def send_mail(
                 server.login(username, password)
             server.send_message(msg)
     else:
-        with smtplib.SMTP(smtp_server, port) as server:
+        with smtplib.SMTP(
+            smtp_server,
+            port,
+            timeout=timeout,
+        ) as server:
             server.set_debuglevel(1 if verbose else 0)
             if use_tls:
                 server.starttls()
@@ -189,18 +209,26 @@ def send(
     ] = None,
     use_ssl: Annotated[
         bool,
-        typer.Option("--ssl", help="Use SSL (default is TLS)"),
+        typer.Option(help="Use SSL (default is TLS)"),
     ] = False,
     use_tls: Annotated[
         bool,
-        typer.Option("--tls", help="Use TLS (recommended to keep on)"),
+        typer.Option(help="Use TLS (recommended to keep on)"),
     ] = True,
+    timeout: Annotated[
+        int,
+        typer.Option(help="How many seconds to wait for server replies"),
+    ] = 15,
     verbose: Annotated[
         bool,
         typer.Option("--verbose", help="Enable SMTP debug output"),
     ] = False,
 ):
     """Send an email via SMTP."""
+
+    log = logging.getLogger("lf-py-stack")
+    logging.basicConfig(level="DEBUG" if verbose else "INFO")
+    log.info("Sending Mail")
 
     body_to_use: str | Path
     if body_file is not None:
@@ -224,8 +252,10 @@ def send(
             attachments=attachment,
             use_tls=use_tls,
             use_ssl=use_ssl,
+            timeout=timeout,
             body_format=body_format,
             verbose=verbose,
+            log=log,
         )
         typer.echo("✓ Email sent successfully!")
     except Exception as e:
@@ -253,12 +283,16 @@ def test(
     ] = None,
     use_ssl: Annotated[
         bool,
-        typer.Option("--ssl", help="Use SSL (default is TLS)"),
+        typer.Option(help="Use SSL (default is TLS)"),
     ] = False,
     use_tls: Annotated[
         bool,
-        typer.Option("--tls", help="Use TLS (recommended to keep on)"),
+        typer.Option(help="Use TLS (recommended to keep on)"),
     ] = True,
+    timeout: Annotated[
+        int,
+        typer.Option(help="How many seconds to wait for server replies"),
+    ] = 15,
     verbose: Annotated[
         bool,
         typer.Option("--verbose", help="Enable SMTP debug output"),
@@ -266,24 +300,66 @@ def test(
 ):
     """Test SMTP connection without sending an email."""
 
+    log = logging.getLogger("lf-py-stack")
+    logging.basicConfig(level="DEBUG" if verbose else "INFO")
+    log.info("Testing Mail Server")
+
     smtp_server, port, username, password = env.mail.get_defaults_from_env_vars(
         smtp_server, port, username, password
     )
 
     try:
         if use_ssl:
+            log.debug("Using ssl")
             context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            with smtplib.SMTP_SSL(
+                smtp_server,
+                port,
+                context=context,
+                timeout=timeout,
+            ) as server:
                 server.set_debuglevel(1 if verbose else 0)
-                server.login(username, password)
-                typer.echo("✓ SSL connection successful!")
+                # EHLO confirms that the remote endpoint is responding as an
+                # SMTP server; authentication is a separate optional check.
+                server.ehlo()
+                if username or password:
+                    log.debug("Logging in with credentials")
+                    server.login(username, password)
+                else:
+                    log.debug("Skipping login; no credentials were provided")
+
+                # NOOP verifies that the connection remains usable after TLS
+                # negotiation and, when requested, authentication.
+                server.noop()
         else:
-            with smtplib.SMTP(smtp_server, port) as server:
+            log.debug("Skipping ssl")
+            with smtplib.SMTP(
+                smtp_server,
+                port,
+                timeout=timeout,
+            ) as server:
                 server.set_debuglevel(1 if verbose else 0)
+                server.ehlo()
                 if use_tls:
+                    log.debug("Using TLS")
                     server.starttls()
-                server.login(username, password)
-                typer.echo(f"✓ Connection successful ({use_tls=})!")
+                    # EHLO must be sent again because STARTTLS resets the
+                    # server's knowledge of the client's SMTP capabilities.
+                    server.ehlo()
+                else:
+                    log.debug("Skipping TLS")
+
+                if username or password:
+                    log.debug("Logging in with credentials")
+                    server.login(username, password)
+                else:
+                    log.debug("Skipping login; no credentials were provided")
+
+                # A successful NOOP proves connectivity without requiring the
+                # server to support anonymous authentication.
+                server.noop()
     except Exception as e:
         typer.echo(f"✗ Connection failed: {e}", err=True)
         raise typer.Exit(1)
+
+    typer.echo("✓ Connection successful!")

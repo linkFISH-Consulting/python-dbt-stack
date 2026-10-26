@@ -15,6 +15,7 @@ TLDR:
 
 ###  Fixed
 - Windows: Logs with non-unicode chars should not crash us anymore (hopefully)
+- Mail cli commands: Corrected ssl/tls options, fixed the logging, added timeout option.
 
 ### Dev
 - Setup CI/CD Actions for ruff and mypy
