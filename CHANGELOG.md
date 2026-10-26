@@ -11,7 +11,13 @@ TLDR:
 - Breaking Changes v1.0.0 (Major Version)
 
 
-## [1.1.0] - Upcoming
+## [1.1.1] - Upcoming
+
+### Fixed
+
+- Wheelhouse would not build on 1.1.0
+
+## [1.1.0] - 2026-10-26
 
 ###  Fixed
 - Windows: Logs with non-unicode chars should not crash us anymore (hopefully)

@@ -4,10 +4,15 @@ on:
   workflow_dispatch:
   release:
     types: [published]
-  # during debugging
-  # push:
-  #   branches:
-  #     - wheelhouse
+  # Validate the wheelhouse whenever the dependency set changes, so a
+  # sdist-only or platform-incompatible package fails here and not at release
+  # time. The release-only steps below are guarded by `github.event_name`.
+  pull_request:
+    paths:
+      - pyproject.toml
+      - requirements.txt
+      - uv.lock
+      - .github/workflows/wheelhouse.yml
 
 jobs:
   build-wheelhouse:
@@ -39,8 +44,6 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-        with:
-          version: "0.11.7"
 
       - name: Upgrade build tools
         run: uv pip install --system --upgrade build wheel
@@ -52,16 +55,44 @@ jobs:
           $version = python -c "import pathlib, tomllib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      - name: Download dependency wheels
+      # `pip wheel` (not `pip download --only-binary=:all:`) because
+      # dbt-core-experimental-parser publishes only an sdist on PyPI: its PEP 517
+      # backend downloads the platform wheel from the dbt GitHub release while
+      # building. `pip wheel` uses prebuilt wheels where available and builds
+      # them where they are not, so every entry here is offline-installable.
+      - name: Download and build dependency wheels
         run: |
           mkdir build\wheels
-          python -m pip download -r requirements.txt -d build\wheels --only-binary=:all:
+          python -m pip wheel -r requirements.txt -w build\wheels
 
       - name: Build and copy project wheel and requirements
         run: |
           python -m build --wheel --outdir build\wheels
           copy requirements.txt build
           copy docs\deploy_wheelhouse_offline.md build\README.md
+
+      # Consumer-side check: install the wheelhouse into a fresh venv with the
+      # network disabled (`--no-index`), mirroring docs/deploy_wheelhouse_offline.md.
+      # Catches a missing or platform-incompatible wheel here instead of on an
+      # offline customer machine.
+      - name: Smoke test the wheelhouse offline
+        run: |
+          $ErrorActionPreference = "Stop"
+          $smoke = "$env:RUNNER_TEMP\smoke-venv"
+          python -m venv $smoke
+          $py = "$smoke\Scripts\python.exe"
+          uv pip sync requirements.txt --python $py --find-links build\wheels --no-index
+          if ($LASTEXITCODE) { throw "uv pip sync from the wheelhouse failed" }
+          uv pip install lf_py_stack --python $py --find-links build\wheels --no-index
+          if ($LASTEXITCODE) { throw "installing the project wheel offline failed" }
+          & $py -c "import dbt.version, lf_py_stack; print('offline install ok: dbt', dbt.version.__version__)"
+          if ($LASTEXITCODE) { throw "importing the installed stack failed" }
+          # The parser ships as a `.data/scripts` payload, so it is installed
+          # verbatim - no `.exe` suffix is appended on windows.
+          if (-not (Get-ChildItem "$smoke\Scripts" -Filter "dbt-core-experimental-parser*")) {
+            throw "dbt-core-experimental-parser binary missing from the offline install"
+          }
+          Write-Host "offline wheelhouse install OK ($((Get-ChildItem build\wheels -Filter "*.whl").Count) wheels)"
 
       - name: Create zip archive
         shell: pwsh
