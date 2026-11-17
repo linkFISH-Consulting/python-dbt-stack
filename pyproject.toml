@@ -1,6 +1,6 @@
 [project]
 name = "lf-py-stack"
-version = "1.1.0"
+version = "1.2.0"
 description = "UV Project with fixed Python Versions and DBT dependencies"
 readme = "README.md"
 authors = [
@@ -23,9 +23,12 @@ dependencies = [
     "duckdb>=1.5.1, <2.0",
     "dbt-sqlserver>=1.12",
     "dbt-postgres>=1.11",
-    # Orchestration
-    "sf-hamilton>=1.89.0, <2.0",
     "coasti>=0.3.0",
+    # Orchestration. The tooling moved to its own repository.
+    # See https://github.com/linkFISH-Consulting/lf_orchestrator
+    # Version is fixed below.
+    "lf-orchestrator",
+    "sf-hamilton>=1.89.0, <2.0",
 ]
 
 [dependency-groups]
@@ -47,6 +50,11 @@ build-backend = "uv_build"
 module-name = "lf_py_stack"
 module-root = "src"
 include = ["lf_py_stack/_bundles/*.bundle"]
+
+[tool.uv.sources]
+# Not on PyPI, so we pull the orchestration tooling straight from git.
+# lf-orchestrator = { git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git", branch = "main" }
+lf-orchestrator = { git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git", tag = "v0.1.1" }
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]

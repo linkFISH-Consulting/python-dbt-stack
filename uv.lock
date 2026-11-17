@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
     "sys_platform == 'win32'",
@@ -613,8 +613,21 @@ wheels = [
 ]
 
 [[package]]
+name = "lf-orchestrator"
+version = "0.1.1"
+source = { git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git?tag=v0.1.1#6648b7f1c35c77a81eeef80b352a5a7c7140ec97" }
+dependencies = [
+    { name = "duckdb" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+    { name = "ruamel-yaml" },
+    { name = "sf-hamilton" },
+    { name = "typer" },
+]
+
+[[package]]
 name = "lf-py-stack"
-version = "1.1.0"
+version = "1.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "coasti" },
@@ -623,6 +636,7 @@ dependencies = [
     { name = "dbt-postgres" },
     { name = "dbt-sqlserver" },
     { name = "duckdb" },
+    { name = "lf-orchestrator" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "pandas" },
@@ -664,6 +678,7 @@ requires-dist = [
     { name = "dbt-postgres", specifier = ">=1.11" },
     { name = "dbt-sqlserver", specifier = ">=1.12" },
     { name = "duckdb", specifier = ">=1.5.1,<2.0" },
+    { name = "lf-orchestrator", git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git?tag=v0.1.1" },
     { name = "numpy" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas" },

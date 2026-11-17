@@ -1,92 +1,17 @@
-"""
-Allow easy logging from within steps
+"""Deprecated shim: use ``lf_orchestrator.logger`` instead.
 
-We have a helper to get a logger:
-- the logger can be directly used like `logger.info("foobar")`
-- the logger has a console and file handler, with levels and file path set from env var
-- messages in the log file contain the step that obtained the logger via `get_logger`
+Kept only for backward compatibility. The implementation moved to
+https://github.com/linkFISH-Consulting/lf_orchestrator
 """
 
-import logging
-import re
-from pathlib import Path
+from importlib import import_module
 
-from lf_py_stack.orchestration.utility import get_caller_name
+from lf_py_stack.orchestration._shim import module_dir, module_getattr
 
-from .env_vars import env
+# `import_module` rather than `import lf_orchestrator.logger as _module`: some
+# submodule names are shadowed by same-named attributes on the new package
+# (e.g. `config`), and attribute access would hand us the wrong object.
+_module = import_module("lf_orchestrator.logger")
 
-
-class LfPyLogger(logging.Logger):
-    @property
-    def log_file(self) -> Path | None:
-        """Return the relevant file handler's path, if any."""
-        for handler in self.handlers:
-            if (
-                handler.name == "lfpy_file_handler"
-                and hasattr(handler, "baseFilename")
-                and (fn := getattr(handler, "baseFilename")) is not None
-            ):
-                return Path(fn)
-        return None
-
-
-def get_logger(step_name: str | None = None) -> LfPyLogger:
-    """Create and configure a logger with both console and file output.
-
-    This allows us to prefix log messages by the step in which they are run,
-    since each step gets their own logger.
-
-    Args:
-        step_name: Optional step name to include in log prefix. If not set,
-        uses the name of the function calling this.
-
-    Notes:
-        - file_path can be set via env var LFPY_LOG_FILE
-        - log level can be set via env var LFPY_LOG_LEVEL
-        - you can skip console prints via `log.info("foo", extra={"log_to_cli": False})`
-    """
-    log = LfPyLogger("lfpy", level=env.logging.log_level)
-    file_path = env.logging.log_file
-
-    # Clear existing handlers to avoid duplication
-    if log.hasHandlers():
-        log.handlers.clear()
-
-    # Create formatter with step name if provided
-    if step_name is None:
-        step_name = get_caller_name() or "no_step"
-
-    # File handler
-    # Create a formatter that strips ANSI codes
-    class StripAnsiFormatter(logging.Formatter):
-        def format(self, record):
-            message = super().format(record)
-            return re.sub(r"(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]", "", message)
-
-    if file_path is None or not Path(file_path).parent.is_dir():
-        log.debug(f"Skipping log file creation because {file_path=} does not exist")
-    else:
-        file_handler = logging.FileHandler(file_path, encoding="utf-8")
-        file_handler.name = "lfpy_file_handler"
-        file_handler.setFormatter(
-            StripAnsiFormatter(
-                f"[%(asctime)s %(levelname)s {step_name}] %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
-        )
-        log.addHandler(file_handler)
-
-    # Console handler
-    # with an option so we can still get log-file only
-    # log.info(f"Log-File Only", extra={"log_to_cli": False})
-    class SuppressCliFilter(logging.Filter):
-        def filter(self, record):
-            return getattr(record, "log_to_cli", True)
-
-    console_handler = logging.StreamHandler()
-    console_handler.name = "lfpy_console_handler"
-    console_handler.setFormatter(logging.Formatter("%(message)s"))
-    console_handler.addFilter(SuppressCliFilter())
-    log.addHandler(console_handler)
-
-    return log
+__getattr__ = module_getattr(_module, "lf_orchestrator.logger")
+__dir__ = module_dir(_module)

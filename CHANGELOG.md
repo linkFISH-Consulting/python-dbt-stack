@@ -11,7 +11,20 @@ TLDR:
 - Breaking Changes v1.0.0 (Major Version)
 
 
-## [1.1.1] - Upcoming
+## [1.2.0] - Upcoming
+
+### Changed
+
+- The orchestration tooling moved to its own repository,
+  [lf_orchestrator](https://github.com/linkFISH-Consulting/lf_orchestrator).
+  `lf_py_stack.orchestration` still works but now only re-exports the new package
+  and emits a `DeprecationWarning`. Import from `lf_orchestrator` instead.
+
+### Dev
+
+- Re-enabled auto release workflow
+
+## [1.1.1] - 2026-10-26
 
 ### Fixed
 
