@@ -9,8 +9,10 @@ The real implementation lives at
 https://github.com/linkFISH-Consulting/lf_orchestrator
 """
 
+import sys
 import warnings
 from importlib import import_module
+from typing import Any
 
 NEW_REPO_URL = "https://github.com/linkFISH-Consulting/lf_orchestrator"
 
@@ -28,7 +30,33 @@ to
   from lf_orchestrator import cli_app
 """
 
-warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
+def _warning_context() -> tuple[str, dict[str, Any]]:
+    """Return the importing module and its warning registry."""
+    frame = sys._getframe(1)
+    while frame is not None:
+        module = frame.f_globals.get("__name__", "")
+        if module != __name__ and not module.startswith(
+            ("importlib.", "_frozen_importlib")
+        ):
+            return module, frame.f_globals
+        frame = frame.f_back
+    return __name__, globals()
+
+
+# A synthetic filename prevents Python from appending the import-site source
+# line to this multi-line message. Use the importer's module for warning
+# filtering, preserving the usual behavior (visible in __main__, ignored in
+# most imported modules unless warnings are enabled).
+_warning_module, _warning_globals = _warning_context()
+warnings.warn_explicit(
+    DEPRECATION_MESSAGE,
+    DeprecationWarning,
+    filename=__name__,
+    lineno=1,
+    module=_warning_module,
+    registry=_warning_globals.setdefault("__warningregistry__", {}),
+)
+del _warning_context, _warning_module, _warning_globals
 
 try:
     from lf_orchestrator import (
