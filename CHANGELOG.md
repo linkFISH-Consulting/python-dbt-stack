@@ -11,7 +11,7 @@ TLDR:
 - Breaking Changes v1.0.0 (Major Version)
 
 
-## [1.2.0] - Upcoming
+## [1.2.0] - 2026-11-19
 
 ### Changed
 
@@ -19,10 +19,24 @@ TLDR:
   [lf_orchestrator](https://github.com/linkFISH-Consulting/lf_orchestrator).
   `lf_py_stack.orchestration` still works but now only re-exports the new package
   and emits a `DeprecationWarning`. Import from `lf_orchestrator` instead.
+- Docs can be found on [docs.linkfish.eu](https://docs.linkfish.eu/category/linkfish-orchestrator/)
+- To update existing orchestration scripts:
+
+```python
+# replace this
+from lf_py_stack.orchestration import ...
+
+# with this
+from lf_orchestrator import ...
+```
 
 ### Dev
 
 - Re-enabled auto release workflow
+
+### Dependencies
+
+- Minor Version bumps
 
 ## [1.1.1] - 2026-10-26
 
