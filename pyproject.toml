@@ -54,7 +54,7 @@ include = ["lf_py_stack/_bundles/*.bundle"]
 [tool.uv.sources]
 # Not on PyPI, so we pull the orchestration tooling straight from git.
 # lf-orchestrator = { git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git", branch = "main" }
-lf-orchestrator = { git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git", tag = "v0.1.1" }
+lf-orchestrator = { git = "https://github.com/linkFISH-Consulting/lf_orchestrator.git", tag = "v0.1.2" }
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]

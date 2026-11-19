@@ -6,7 +6,7 @@ agate==1.9.1
     #   dbt-common
     #   dbt-core
     #   dbt-postgres
-annotated-doc==0.0.5
+annotated-doc==0.0.7
     # via typer
 annotated-types==0.8.0
     # via pydantic
@@ -26,9 +26,9 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.5.2
     # via requests
-click==8.5.0
+click==8.5.1
     # via dbt-core
-coasti==0.3.0
+coasti==0.3.1
     # via lf-py-stack
 coasti-superset-io==0.3.0
     # via coasti
@@ -42,7 +42,7 @@ copier==9.17.2
     # via coasti
 daff==1.4.2
     # via dbt-core
-dbt-adapters==1.24.5
+dbt-adapters==1.24.6
     # via
     #   dbt-core
     #   dbt-duckdb
@@ -55,15 +55,15 @@ dbt-common==1.39.0
     #   dbt-duckdb
     #   dbt-postgres
     #   dbt-sqlserver
-dbt-core==1.12.6
+dbt-core==1.12.7
     # via
     #   dbt-duckdb
     #   dbt-postgres
     #   dbt-sqlserver
     #   lf-py-stack
-dbt-core-experimental-parser==2.0.8
+dbt-core-experimental-parser==2.0.11
     # via dbt-core
-dbt-duckdb==1.11.0
+dbt-duckdb==1.11.1
     # via lf-py-stack
 dbt-extractor==0.6.0
     # via dbt-core
@@ -74,7 +74,7 @@ dbt-protos==1.0.615
     #   dbt-adapters
     #   dbt-common
     #   dbt-core
-dbt-sqlserver==1.12.1
+dbt-sqlserver==1.12.2
     # via lf-py-stack
 deepdiff==8.6.2
     # via dbt-common
@@ -83,12 +83,13 @@ distlib==0.4.4
 duckdb==1.5.6
     # via
     #   dbt-duckdb
+    #   lf-orchestrator
     #   lf-py-stack
-dunamai==1.26.3
+dunamai==1.26.5
     # via copier
 et-xmlfile==2.0.0
     # via openpyxl
-filelock==4.2.4
+filelock==4.2.12
     # via
     #   python-discovery
     #   virtualenv
@@ -98,7 +99,7 @@ identify==2.6.20
     # via pre-commit
 idna==3.20
     # via requests
-importlib-metadata==10.1.0
+importlib-metadata==10.2.0
     # via metricflow
 iniconfig==2.3.1
     # via pytest
@@ -122,11 +123,15 @@ jsonschema==4.26.0
     #   metricflow
 jsonschema-specifications==2025.9.1
     # via jsonschema
+lazy-importer==0.1.0
+    # via importlib-metadata
 leather==0.4.1
     # via agate
+lf-orchestrator @ git+https://github.com/linkFISH-Consulting/lf_orchestrator.git@b274a3b88bde2b1e7167429573bf8596d6d0a792
+    # via lf-py-stack
 librt==0.16.0 ; platform_python_implementation != 'PyPy'
     # via mypy
-markdown-it-py==4.2.0
+markdown-it-py==4.3.0
     # via rich
 markupsafe==3.0.4
     # via jinja2
@@ -137,22 +142,22 @@ mashumaro==3.17
     #   dbt-core
 mdurl==0.1.2
     # via markdown-it-py
-metricflow==0.213.0
+metricflow==0.214.0
     # via dbt-core
 more-itertools==10.8.0
     # via metricflow
-msgpack==1.2.3
+msgpack==1.2.4
     # via mashumaro
-mypy==2.4.0
-mypy-extensions==1.1.0
+mypy==2.4.1
+mypy-extensions==1.2.0
     # via
     #   mypy
     #   typing-inspect
 networkx==3.7
     # via dbt-core
-nodeenv==1.11.0
+nodeenv==1.12.0
     # via pre-commit
-numpy==2.5.4
+numpy==2.5.5
     # via
     #   apache-hamilton
     #   lf-py-stack
@@ -160,7 +165,7 @@ numpy==2.5.4
     #   scipy
 openpyxl==3.1.5
     # via lf-py-stack
-opentelemetry-api==1.45.1
+opentelemetry-api==1.45.2
     # via
     #   dbt-common
     #   dbt-core
@@ -173,7 +178,7 @@ packaging==26.3
     #   dunamai
     #   pytest
     #   virtualenv
-pandas==3.1.0
+pandas==3.1.1
     # via
     #   apache-hamilton
     #   lf-py-stack
@@ -185,7 +190,7 @@ pathspec==1.0.4
     #   dbt-common
     #   dbt-core
     #   mypy
-platformdirs==4.13.5
+platformdirs==4.14.7
     # via
     #   coasti
     #   copier
@@ -211,37 +216,39 @@ protobuf==6.33.6
     #   dbt-protos
 psycopg2-binary==2.9.13
     # via dbt-postgres
-pydantic==2.14.1
+pydantic==2.14.3
     # via
     #   copier
     #   dbt-core
     #   metricflow
-pydantic-core==2.50.1
+    #   typer
+pydantic-core==2.50.4
     # via pydantic
 pygments==2.21.0
     # via
     #   copier
     #   pytest
     #   rich
-pytest==9.1.1
+pytest==9.2.0
 python-dateutil==2.9.0.post0
     # via
     #   dbt-common
     #   metricflow
     #   pandas
-python-discovery==1.6.4
+python-discovery==1.9.6
     # via virtualenv
 python-dotenv==1.2.4
     # via
     #   coasti
     #   coasti-superset-io
     #   dbt-core
+    #   lf-orchestrator
     #   lf-py-stack
-python-slugify==9.1.3
+python-slugify==9.2.0
     # via agate
 pytimeparse==1.1.10
     # via agate
-pytz==2026.5
+pytz==2026.6
     # via
     #   dbt-adapters
     #   dbt-core
@@ -269,7 +276,9 @@ requests==2.34.2
     #   dbt-core
     #   snowplow-tracker
 rich==15.0.0
-    # via typer
+    # via
+    #   lf-orchestrator
+    #   typer
 rpds-py==2026.9.1
     # via
     #   jsonschema
@@ -278,34 +287,38 @@ ruamel-yaml==0.19.1
     # via
     #   coasti
     #   coasti-superset-io
+    #   lf-orchestrator
     #   lf-py-stack
-ruff==0.17.2
+ruff==0.17.5
 scipy==1.18.1
     # via lf-py-stack
 sf-hamilton==1.90.0
-    # via lf-py-stack
+    # via
+    #   lf-orchestrator
+    #   lf-py-stack
 shellingham==1.5.4
     # via typer
 six==1.17.0
     # via python-dateutil
 snowplow-tracker==1.1.0
     # via dbt-core
-sqlalchemy==2.1.6
+sqlalchemy==2.1.9
     # via lf-py-stack
-sqlglot==30.24.0
+sqlglot==30.33.0
     # via metricflow
-sqlparse==0.6.0
+sqlparse==0.6.1
     # via dbt-core
 tabulate==0.10.0
     # via metricflow
 text-unidecode==1.3
     # via python-slugify
-typer==0.27.3
+typer==0.29.2
     # via
     #   coasti
     #   coasti-superset-io
+    #   lf-orchestrator
     #   lf-py-stack
-types-pyyaml==6.0.12.20260906
+types-pyyaml==6.0.12.20261113
 typing-extensions==4.16.0
     # via
     #   apache-hamilton
@@ -326,15 +339,15 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspect==0.9.0
     # via apache-hamilton
-typing-inspection==0.4.4
+typing-inspection==0.4.5
     # via pydantic
-tzdata==2026.5 ; sys_platform == 'emscripten' or sys_platform == 'win32'
+tzdata==2026.6 ; sys_platform == 'emscripten' or sys_platform == 'win32'
     # via
     #   agate
     #   pandas
 urllib3==2.8.0
     # via requests
-virtualenv==21.14.13
+virtualenv==21.15.9
     # via pre-commit
 wcwidth==0.9.4
     # via prompt-toolkit
