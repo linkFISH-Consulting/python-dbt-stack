@@ -12,6 +12,7 @@ https://github.com/linkFISH-Consulting/lf_orchestrator
 import sys
 import warnings
 from importlib import import_module
+from types import FrameType
 from typing import Any
 
 NEW_REPO_URL = "https://github.com/linkFISH-Consulting/lf_orchestrator"
@@ -30,9 +31,10 @@ to
   from lf_orchestrator import cli_app
 """
 
+
 def _warning_context() -> tuple[str, dict[str, Any]]:
     """Return the importing module and its warning registry."""
-    frame = sys._getframe(1)
+    frame: FrameType | None = sys._getframe(1)
     while frame is not None:
         module = frame.f_globals.get("__name__", "")
         if module != __name__ and not module.startswith(
