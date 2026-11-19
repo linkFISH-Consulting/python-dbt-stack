@@ -1,9 +1,13 @@
 name: Auto Release
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-  # PS 2026-01-23 Disabled Auto-Release, until Docker step works.
-  # (Manual releases do trigger the docker step)
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   check-version-and-release:
@@ -111,6 +115,16 @@ jobs:
               --title "Release $TAG_NAME" \
               --generate-notes
           fi
+
+      - name: Trigger Docker build
+        if: steps.version_changed.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="v${{ steps.current_version.outputs.version }}"
+          # A tag pushed with GITHUB_TOKEN does not trigger other workflows.
+          # Dispatch the Docker workflow explicitly against the new release tag.
+          gh workflow run docker-registry.yml --ref "$TAG_NAME"
 
       - name: Output result
         run: |

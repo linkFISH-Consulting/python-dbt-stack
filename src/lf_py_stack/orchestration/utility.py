@@ -1,30 +1,17 @@
-import inspect
+"""Deprecated shim: use ``lf_orchestrator.utility`` instead.
 
+Kept only for backward compatibility. The implementation moved to
+https://github.com/linkFISH-Consulting/lf_orchestrator
+"""
 
-def get_caller_name(num_back: int = 1) -> str | None:
-    """
-    Infer caller function name by walking up the frame stack.
+from importlib import import_module
 
-    Args:
-        num_back: Number of `.f_back` hops from current frame.
-                      Example:
-                      - 0 -> direct caller (function where use get_caller_name)
-                      - 1 -> caller's caller (useful in dataclass __post_init__)
-    Returns:
-        The inferred function name, or None if unavailable.
-    """
-    frame = inspect.currentframe()
-    try:
-        if frame is None:
-            return None
+from lf_py_stack.orchestration._shim import module_dir, module_getattr
 
-        current = frame
-        for _ in range(num_back + 1):
-            if current.f_back is None:
-                return None
-            current = current.f_back
+# `import_module` rather than `import lf_orchestrator.utility as _module`: some
+# submodule names are shadowed by same-named attributes on the new package
+# (e.g. `config`), and attribute access would hand us the wrong object.
+_module = import_module("lf_orchestrator.utility")
 
-        return current.f_code.co_name
-    finally:
-        # Avoid reference cycles
-        del frame
+__getattr__ = module_getattr(_module, "lf_orchestrator.utility")
+__dir__ = module_dir(_module)

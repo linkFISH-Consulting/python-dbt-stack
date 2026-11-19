@@ -56,10 +56,13 @@ python -m pip install "git+https://github.com/linkFISH-Consulting/python-dbt-sta
 
 ## Orchestration
 
-We now include tools to orchestrate simple workflows.
-They are written as simple python functions and respect .env files.
+The orchestration tooling (running simple python workflow steps with hamilton)
+has moved to its own repository:
 
-[See here](/docs/orchestration.md)
+- [lf-orchestrator](https://github.com/linkFISH-Consulting/lf_orchestrator)
+
+If you still use `from lf_py_stack.orchestration import ...`, the import keeps working
+but emits a `DeprecationWarning`; change it to `from lf_orchestrator import ...`.
 
 
 ## Further Reading

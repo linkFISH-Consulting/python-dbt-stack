@@ -1,32 +1,17 @@
-from .env_vars import EnvVars, env
-from .utility import get_caller_name
+"""Deprecated shim: use ``lf_orchestrator.config`` instead.
 
+Kept only for backward compatibility. The implementation moved to
+https://github.com/linkFISH-Consulting/lf_orchestrator
+"""
 
-class OrchestrationConfig:
-    """
-    Config object that holds details for the the whole run and all steps.
+from importlib import import_module
 
-    - User-provided arguments to steps
-    - Typed access known environment variables
-    """
+from lf_py_stack.orchestration._shim import module_dir, module_getattr
 
-    env: EnvVars
-    step_args: dict[str, str]
+# `import_module` rather than `import lf_orchestrator.config as _module`: some
+# submodule names are shadowed by same-named attributes on the new package
+# (e.g. `config`), and attribute access would hand us the wrong object.
+_module = import_module("lf_orchestrator.config")
 
-    def __init__(self):
-        self.env = env
-        self.step_args = {}
-
-    def get_step_args(self, step_name: str | None = None) -> str:
-        """
-        Get the arguments that were provided by the cli for a given step.
-        """
-
-        if step_name is None:
-            step_name = get_caller_name(1) or "no_step"
-
-        return self.step_args.get(step_name, "")
-
-
-# singleton
-config = OrchestrationConfig()
+__getattr__ = module_getattr(_module, "lf_orchestrator.config")
+__dir__ = module_dir(_module)
